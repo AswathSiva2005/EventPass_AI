@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createEventController,
+  bulkCollegesController,
   dashboardController,
   eventsController,
   excelExportController,
@@ -15,6 +16,7 @@ import {
 import { validateRequest } from "../middlewares/validation.middleware.js";
 import {
   createEventValidator,
+  bulkCollegeValidator,
   registrationListValidator,
   reviewRegistrationValidator
 } from "../validators/admin.validator.js";
@@ -37,6 +39,7 @@ adminRouter.patch(
 );
 adminRouter.get("/events", eventsController);
 adminRouter.post("/events", createEventValidator, validateRequest, createEventController);
+adminRouter.post("/colleges/bulk", bulkCollegeValidator, validateRequest, bulkCollegesController);
 adminRouter.get(
   "/exports/registrations.xlsx",
   registrationListValidator,

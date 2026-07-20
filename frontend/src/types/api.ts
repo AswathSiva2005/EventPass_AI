@@ -28,7 +28,7 @@ export interface Event {
   name: string;
   code: string;
   description: string;
-  college: College | string;
+  college: College | string | null;
   venue: {
     name: string;
     address: string;

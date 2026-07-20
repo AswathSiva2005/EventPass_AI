@@ -18,4 +18,8 @@ body { margin: 0; min-width: 320px; min-height: 100vh; background: #f4f6f3; colo
 .panel { border: 1px solid rgb(15 35 50 / 9%); background: rgb(255 255 255 / 88%); box-shadow: 0 20px 55px rgb(8 17 31 / 6%); }
 .dark .panel { border-color: rgb(255 255 255 / 8%); background: rgb(16 28 45 / 82%); box-shadow: 0 24px 70px rgb(0 0 0 / 22%); }
 .focus-ring { @apply outline-none transition focus-visible:ring-3 focus-visible:ring-lime-400/35; }
+select { color: #111b2b; }
+select option { background-color: #fff; color: #111b2b; }
+.dark select { color: #f4f8ef; }
+.dark select option { background-color: #101c2d; color: #f4f8ef; }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; } }

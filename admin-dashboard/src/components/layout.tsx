@@ -1,4 +1,4 @@
-import { CalendarPlus, LayoutDashboard, LogOut, Menu, Moon, ScanLine, Sun, Users, X } from "lucide-react";
+import { Building2, CalendarPlus, LayoutDashboard, LogOut, Menu, Moon, ScanLine, Sun, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/auth";
@@ -6,7 +6,8 @@ import { useAuth } from "../context/auth";
 const navigation = [
   { to: "/", label: "Overview", icon: LayoutDashboard },
   { to: "/registrations", label: "Registrations", icon: Users },
-  { to: "/events", label: "Events & venues", icon: CalendarPlus }
+  { to: "/events", label: "Events & venues", icon: CalendarPlus },
+  { to: "/colleges", label: "Colleges", icon: Building2 }
 ];
 
 export const Layout = () => {

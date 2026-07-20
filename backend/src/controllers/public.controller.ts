@@ -18,7 +18,10 @@ export const listEventsController = asyncHandler(async (request, response) => {
     .populate("college", "name code")
     .sort({ startsAt: 1 })
     .lean();
-  sendSuccess(response, { message: "Events retrieved", data: events });
+  // A deleted reference is populated as null. Do not publish an event that
+  // students cannot complete registration for.
+  const completeEvents = events.filter((event) => event.college !== null);
+  sendSuccess(response, { message: "Events retrieved", data: completeEvents });
 });
 
 export const listCollegesController = asyncHandler(async (_request, response) => {

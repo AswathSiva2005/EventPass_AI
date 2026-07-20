@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AppLayout } from "./components/layout/app-layout";
+import { RouteErrorPage } from "./pages/route-error";
 
 const HomePage = lazy(() => import("./pages/home").then((module) => ({ default: module.HomePage })));
 const EventsPage = lazy(() => import("./pages/events").then((module) => ({ default: module.EventsPage })));
@@ -21,6 +22,7 @@ const PageLoader = () => (
 const router = createBrowserRouter([
   {
     element: <AppLayout />,
+    errorElement: <RouteErrorPage />,
     children: [
       { path: "/", element: <HomePage /> },
       { path: "/events", element: <EventsPage /> },

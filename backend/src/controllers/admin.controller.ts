@@ -6,6 +6,8 @@ import {
   listAdminEvents,
   listRegistrations,
   reviewRegistration,
+  upsertColleges,
+  type BulkCollegeInput,
   type CreateEventInput,
   type RegistrationFilters
 } from "../services/admin.service.js";
@@ -105,6 +107,11 @@ export const createEventController = asyncHandler(async (request, response) => {
 export const eventsController = asyncHandler(async (_request, response) => {
   const events = await listAdminEvents();
   sendSuccess(response, { message: "Events retrieved", data: events });
+});
+
+export const bulkCollegesController = asyncHandler(async (request, response) => {
+  const colleges = await upsertColleges((request.body as { colleges: BulkCollegeInput[] }).colleges);
+  sendSuccess(response, { statusCode: 201, message: `${colleges.length} colleges saved`, data: colleges });
 });
 
 export const excelExportController = asyncHandler(async (request, response) => {

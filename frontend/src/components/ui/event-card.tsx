@@ -6,7 +6,8 @@ import { eventDateParts, formatEventDate } from "../../utils/format";
 
 export const EventCard = ({ event, index = 0 }: { event: Event; index?: number }) => {
   const date = eventDateParts(event.startsAt);
-  const college = typeof event.college === "string" ? null : event.college.name;
+  const college =
+    event.college && typeof event.college !== "string" ? event.college.name : null;
 
   return (
     <motion.article
@@ -38,7 +39,7 @@ export const EventCard = ({ event, index = 0 }: { event: Event; index?: number }
       </p>
       <div className="mt-5 space-y-2 border-t border-slate-200/70 pt-4 text-sm text-slate-600 dark:border-white/10 dark:text-slate-300">
         <p className="flex items-center gap-2"><Clock3 size={15} />{formatEventDate(event.startsAt)}</p>
-        <p className="flex items-center gap-2"><MapPin size={15} />{event.venue.name}</p>
+        <p className="flex items-center gap-2"><MapPin size={15} />{event.venue?.name || "Venue to be announced"}</p>
       </div>
       <Link
         to={`/register?event=${event._id}`}

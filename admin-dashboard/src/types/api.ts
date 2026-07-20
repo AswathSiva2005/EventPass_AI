@@ -19,10 +19,10 @@ export interface Registration {
   year: number; verificationStatus: "pending"|"approved"|"rejected";
   attendanceStatus: "registered"|"checked_in"|"checked_out"|"absent"; createdAt: string;
   selfie: { url: string }; idFront: { url: string }; idBack: { url: string };
-  event: RefItem; college: RefItem; department: RefItem;
+  event: RefItem | null; college: RefItem | null; department: RefItem | null;
 }
 export interface AdminEvent {
   _id: string; name: string; code: string; status: string; startsAt: string; endsAt: string;
-  capacity: number; registrationCount: number; college: RefItem;
+  capacity: number; registrationCount: number; college: RefItem | null;
   venue: { name: string; address: string };
 }

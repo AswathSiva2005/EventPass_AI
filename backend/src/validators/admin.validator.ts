@@ -54,3 +54,13 @@ export const createEventValidator = [
     .isIn(["draft", "published"])
     .withMessage("New events must be draft or published")
 ];
+
+export const bulkCollegeValidator = [
+  body("colleges").isArray({ min: 1, max: 100 }).withMessage("Add 1 to 100 colleges"),
+  body("colleges.*.name").trim().isLength({ min: 3, max: 200 }).withMessage("College name is invalid"),
+  body("colleges.*.code").trim().toUpperCase().matches(/^[A-Z0-9][A-Z0-9_-]{2,49}$/).withMessage("College code is invalid"),
+  body("colleges.*.city").trim().isLength({ min: 2, max: 100 }).withMessage("City is invalid"),
+  body("colleges.*.departments").isArray({ min: 1, max: 50 }).withMessage("Add at least one department"),
+  body("colleges.*.departments.*.name").trim().isLength({ min: 2, max: 150 }),
+  body("colleges.*.departments.*.code").trim().toUpperCase().matches(/^[A-Z0-9][A-Z0-9_-]{2,49}$/)
+];

@@ -8,6 +8,8 @@ export const getAdminEvents = async () => (await api.get<ApiResponse<AdminEvent[
 export const createEvent = async (payload: unknown) => api.post("/admin/events", payload);
 export const getColleges = async () => (await api.get<ApiResponse<RefItem[]>>("/colleges")).data.data;
 export const getDepartments = async (college: string) => (await api.get<ApiResponse<RefItem[]>>("/departments", { params: { college } })).data.data;
+export const saveColleges = async (colleges: Array<{name:string;code:string;city:string;departments:Array<{name:string;code:string}>}>) =>
+  (await api.post<ApiResponse<Array<RefItem&{city:string;departmentCount:number}>>>("/admin/colleges/bulk", { colleges })).data.data;
 export const downloadExport = async (format: "xlsx"|"pdf", params: Record<string,string|number>) => {
   const response = await api.get<Blob>(`/admin/exports/registrations.${format}`, { params, responseType: "blob" });
   const url = URL.createObjectURL(response.data);

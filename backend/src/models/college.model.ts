@@ -13,9 +13,9 @@ export interface CollegeAddress {
 export interface College {
   name: string;
   code: string;
-  address: CollegeAddress;
-  contactEmail: string;
-  contactPhone: string;
+  address?: CollegeAddress;
+  contactEmail?: string;
+  contactPhone?: string;
   website?: string;
   isActive: boolean;
   createdAt: Date;
@@ -52,10 +52,9 @@ const collegeSchema = new Schema<College>(
       maxlength: 50,
       match: [codePattern, "College code is invalid"]
     },
-    address: { type: addressSchema, required: true },
+    address: { type: addressSchema },
     contactEmail: {
       type: String,
-      required: true,
       lowercase: true,
       trim: true,
       maxlength: 254,
@@ -63,7 +62,6 @@ const collegeSchema = new Schema<College>(
     },
     contactPhone: {
       type: String,
-      required: true,
       trim: true,
       match: [phonePattern, "Contact phone must be in international format"]
     },

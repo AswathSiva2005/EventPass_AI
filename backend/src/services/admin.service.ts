@@ -283,6 +283,47 @@ export const listAdminEvents = async () =>
     .sort({ startsAt: -1 })
     .lean();
 
+export interface BulkCollegeInput {
+  name: string;
+  code: string;
+  city: string;
+  departments: Array<{ name: string; code: string }>;
+}
+
+export const upsertColleges = async (inputs: BulkCollegeInput[]) => {
+  const results = [];
+  for (const input of inputs) {
+    const college = await CollegeModel.findOneAndUpdate(
+      { code: input.code },
+      {
+        $set: {
+          name: input.name,
+          code: input.code,
+          address: {
+            line1: `${input.city} district`,
+            city: input.city,
+            state: "Tamil Nadu",
+            postalCode: "Not provided",
+            country: "India"
+          },
+          isActive: true
+        }
+      },
+      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+    );
+    if (!college) throw new AppError(`Unable to save ${input.name}`, 500, "COLLEGE_SAVE_FAILED");
+    await Promise.all(input.departments.map((department) =>
+      DepartmentModel.findOneAndUpdate(
+        { college: college._id, code: department.code },
+        { $set: { ...department, isActive: true } },
+        { upsert: true, runValidators: true, setDefaultsOnInsert: true }
+      )
+    ));
+    results.push({ _id: college._id, name: college.name, code: college.code, city: input.city, departmentCount: input.departments.length });
+  }
+  return results;
+};
+
 export const getRegistrationExportData = async (filters: RegistrationFilters) =>
   StudentModel.find(buildRegistrationFilter(filters))
     .select(

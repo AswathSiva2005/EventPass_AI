@@ -115,7 +115,7 @@ export const RegisterPage = () => {
             <label className={labelClass} htmlFor="event">Choose event</label>
             <select id="event" className={inputClass} disabled={eventsLoading} {...register("event", { required: "Choose an event" })}>
               <option value="">{eventsLoading ? "Loading events…" : "Select an upcoming event"}</option>
-              {events.map((event) => <option key={event._id} value={event._id}>{event.name} — {event.venue.name}</option>)}
+              {events.map((event) => <option key={event._id} value={event._id}>{event.name} — {event.venue?.name || "Venue to be announced"}</option>)}
             </select>
             {fieldError("event")}
             {selectedEvent && <p className="mt-2 text-xs text-slate-500">Registration closes {new Date(selectedEvent.registrationClosesAt).toLocaleString("en-IN")}.</p>}

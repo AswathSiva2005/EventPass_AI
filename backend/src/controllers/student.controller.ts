@@ -18,9 +18,14 @@ interface RegistrationBody {
   year: number;
   phone: string;
   email: string;
-  "emergencyContact[name]": string;
-  "emergencyContact[relationship]": string;
-  "emergencyContact[phone]": string;
+  emergencyContact?: {
+    name?: string;
+    relationship?: string;
+    phone?: string;
+  };
+  "emergencyContact[name]"?: string;
+  "emergencyContact[relationship]"?: string;
+  "emergencyContact[phone]"?: string;
 }
 
 const registrationFiles = (request: Parameters<RequestHandler>[0]): RegistrationFiles => {
@@ -49,9 +54,12 @@ export const registerStudentController = asyncHandler(async (request, response) 
     phone: body.phone,
     email: body.email,
     emergencyContact: {
-      name: body["emergencyContact[name]"],
-      relationship: body["emergencyContact[relationship]"],
-      phone: body["emergencyContact[phone]"]
+      name: body.emergencyContact?.name ?? body["emergencyContact[name]"] ?? "",
+      relationship:
+        body.emergencyContact?.relationship ??
+        body["emergencyContact[relationship]"] ??
+        "",
+      phone: body.emergencyContact?.phone ?? body["emergencyContact[phone]"] ?? ""
     }
   };
   const registration = await registerStudent(input, registrationFiles(request));

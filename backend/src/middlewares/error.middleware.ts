@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler } from "express";
+import mongoose from "mongoose";
 import { MulterError } from "multer";
 import { env } from "../config/env.js";
 import { AppError } from "../utils/app-error.js";
@@ -8,6 +9,18 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, request, respo
   void _next;
   let appError: AppError;
   if (error instanceof AppError) appError = error;
+  else if (error instanceof mongoose.Error.ValidationError) {
+    const details = Object.values(error.errors).map((item) => ({
+      field: item.path,
+      message: item.message
+    }));
+    appError = new AppError(
+      "Registration data could not be saved",
+      422,
+      "DATABASE_VALIDATION_ERROR",
+      details
+    );
+  }
   else if (error instanceof MulterError) {
     appError = new AppError(error.message, 400, `UPLOAD_${error.code}`);
   } else if (error instanceof SyntaxError && "body" in error) {

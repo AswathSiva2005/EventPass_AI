@@ -3,6 +3,10 @@ import axios from "axios";
 interface ApiErrorBody {
   error?: {
     message?: string;
+    details?: Array<{
+      field?: string;
+      message?: string;
+    }>;
   };
   message?: string;
 }
@@ -15,7 +19,12 @@ export const getErrorMessage = (
     if (!error.response) {
       return "Unable to reach EventPass. Check your connection and try again.";
     }
-    return error.response.data?.error?.message ?? error.response.data?.message ?? fallback;
+    const apiError = error.response.data?.error;
+    const detail = apiError?.details?.[0];
+    if (detail?.message) {
+      return detail.field ? `${detail.field}: ${detail.message}` : detail.message;
+    }
+    return apiError?.message ?? error.response.data?.message ?? fallback;
   }
   return error instanceof Error ? error.message : fallback;
 };
