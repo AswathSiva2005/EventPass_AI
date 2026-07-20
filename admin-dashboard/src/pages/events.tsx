@@ -1,0 +1,32 @@
+import { CalendarPlus, MapPin, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
+import { createEvent, getAdminEvents, getColleges, getDepartments } from "../api/admin";
+import { Status } from "../components/status";
+import type { AdminEvent, RefItem } from "../types/api";
+
+interface FormData {name:string;code:string;description:string;college:string;departments:string[];venueName:string;venueAddress:string;startsAt:string;endsAt:string;registrationOpensAt:string;registrationClosesAt:string;capacity:number;status:"draft"|"published";}
+const field="focus-ring mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm dark:border-white/10 dark:bg-white/5";
+export const EventsPage=()=>{
+  const [events,setEvents]=useState<AdminEvent[]>([]),[colleges,setColleges]=useState<RefItem[]>([]),[departments,setDepartments]=useState<RefItem[]>([]);
+  const {register,handleSubmit,reset,control,formState:{errors,isSubmitting}}=useForm<FormData>({defaultValues:{departments:[],status:"draft"}});
+  const college=useWatch({control,name:"college"});
+  const load=()=>getAdminEvents().then(setEvents).catch(()=>toast.error("Unable to load events"));
+  useEffect(()=>{void load();getColleges().then(setColleges).catch(()=>undefined);},[]);
+  useEffect(()=>{if(!college)return;getDepartments(college).then(setDepartments).catch(()=>setDepartments([]));},[college]);
+  const submit=async(v:FormData)=>{try{await createEvent({name:v.name,code:v.code,description:v.description,college:v.college,departments:v.departments,venue:{name:v.venueName,address:v.venueAddress},startsAt:v.startsAt,endsAt:v.endsAt,registrationOpensAt:v.registrationOpensAt,registrationClosesAt:v.registrationClosesAt,capacity:Number(v.capacity),status:v.status});toast.success("Event created");reset({departments:[],status:"draft"});await load();}catch{toast.error("Event could not be created. Check dates, code, and references.");}};
+  return <div><div><p className="text-xs font-extrabold tracking-[.2em] text-lime-700 uppercase dark:text-lime-300">Event setup</p><h1 className="mt-2 font-display text-3xl font-bold tracking-[-.045em]">Events and venues</h1><p className="mt-2 text-sm text-slate-500">Publish a registration window and assign its campus venue.</p></div>
+    <div className="mt-7 grid gap-6 xl:grid-cols-[.92fr_1.08fr]"><form onSubmit={e=>void handleSubmit(submit)(e)} className="panel rounded-3xl p-6"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-lime-300 text-ink-950"><CalendarPlus size={19}/></span><h2 className="font-display text-xl font-bold">Create event</h2></div><div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <label className="text-sm font-bold">Event name<input className={field} {...register("name",{required:true})}/></label><label className="text-sm font-bold">Event code<input className={field} {...register("code",{required:true})}/></label>
+      <label className="text-sm font-bold sm:col-span-2">Description<textarea rows={4} className={`${field} h-auto py-3`} {...register("description",{required:true,minLength:10})}/></label>
+      <label className="text-sm font-bold">College<select className={field} {...register("college",{required:true})}><option value="">Choose college</option>{colleges.map(c=><option key={c._id} value={c._id}>{c.name}</option>)}</select></label>
+      <label className="text-sm font-bold">Departments<select multiple className={`${field} h-24 py-2`} {...register("departments",{required:true})}>{departments.map(d=><option key={d._id} value={d._id}>{d.name}</option>)}</select></label>
+      <label className="text-sm font-bold">Venue name<input className={field} {...register("venueName",{required:true})}/></label><label className="text-sm font-bold">Venue address<input className={field} {...register("venueAddress",{required:true})}/></label>
+      <label className="text-sm font-bold">Starts at<input type="datetime-local" className={field} {...register("startsAt",{required:true})}/></label><label className="text-sm font-bold">Ends at<input type="datetime-local" className={field} {...register("endsAt",{required:true})}/></label>
+      <label className="text-sm font-bold">Registration opens<input type="datetime-local" className={field} {...register("registrationOpensAt",{required:true})}/></label><label className="text-sm font-bold">Registration closes<input type="datetime-local" className={field} {...register("registrationClosesAt",{required:true})}/></label>
+      <label className="text-sm font-bold">Capacity<input type="number" min={1} className={field} {...register("capacity",{required:true,valueAsNumber:true})}/></label><label className="text-sm font-bold">Initial status<select className={field} {...register("status")}><option value="draft">Draft</option><option value="published">Published</option></select></label>
+    </div>{Object.keys(errors).length>0&&<p className="mt-4 text-xs font-semibold text-rose-500">Complete all required fields with valid values.</p>}<button disabled={isSubmitting} className="mt-6 h-11 w-full rounded-xl bg-ink-950 text-sm font-bold text-white hover:bg-lime-400 hover:text-ink-950 dark:bg-lime-300 dark:text-ink-950">{isSubmitting?"Creating…":"Create event"}</button></form>
+    <section><h2 className="font-display text-xl font-bold">Event portfolio</h2><div className="mt-4 grid gap-4">{events.length===0?<div className="panel rounded-2xl p-10 text-center text-sm text-slate-500">No events have been created.</div>:events.map(event=><article key={event._id} className="panel rounded-2xl p-5"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-extrabold tracking-wider text-lime-700 uppercase dark:text-lime-300">{event.code}</p><h3 className="mt-1 font-display text-xl font-bold">{event.name}</h3><p className="mt-1 text-xs text-slate-500">{event.college.name}</p></div><Status value={event.status}/></div><div className="mt-5 grid gap-3 text-sm text-slate-600 sm:grid-cols-2 dark:text-slate-300"><p className="flex items-center gap-2"><MapPin size={16}/>{event.venue.name}</p><p className="flex items-center gap-2"><Users size={16}/>{event.registrationCount}/{event.capacity} registered</p></div><p className="mt-4 text-xs text-slate-500">{new Date(event.startsAt).toLocaleString("en-IN")} — {new Date(event.endsAt).toLocaleString("en-IN")}</p></article>)}</div></section></div>
+  </div>;
+};

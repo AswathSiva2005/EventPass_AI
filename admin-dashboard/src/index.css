@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --color-ink-950: #08111f;
+  --color-ink-900: #101c2d;
+  --color-lime-300: #baf67a;
+  --color-lime-400: #96e94f;
+}
+
+:root { color-scheme: light; font-synthesis: none; }
+:root.dark { color-scheme: dark; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: #f4f6f3; color: #111b2b; }
+.dark body { background: #08111f; color: #f4f8ef; }
+::selection { background: rgb(150 233 79 / 35%); }
+.panel { border: 1px solid rgb(15 35 50 / 9%); background: rgb(255 255 255 / 88%); box-shadow: 0 20px 55px rgb(8 17 31 / 6%); }
+.dark .panel { border-color: rgb(255 255 255 / 8%); background: rgb(16 28 45 / 82%); box-shadow: 0 24px 70px rgb(0 0 0 / 22%); }
+.focus-ring { @apply outline-none transition focus-visible:ring-3 focus-visible:ring-lime-400/35; }
+@media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; } }

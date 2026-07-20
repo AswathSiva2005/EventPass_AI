@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --color-ink-950: #07111f;
+  --color-ink-900: #0c1a2d;
+  --color-mint-300: #76f5c3;
+  --color-mint-400: #40e0a4;
+  --color-sky-400: #4db8ff;
+  --shadow-glow: 0 0 0 1px rgb(64 224 164 / 18%), 0 24px 70px rgb(33 205 151 / 14%);
+}
+
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+:root.dark {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: #f7faf9;
+  color: #122033;
+}
+
+.dark body {
+  background: #07111f;
+  color: #edf8f4;
+}
+
+::selection {
+  background: rgb(64 224 164 / 35%);
+}
+
+.page-shell {
+  width: min(1180px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+.surface {
+  border: 1px solid rgb(15 44 55 / 10%);
+  background: rgb(255 255 255 / 78%);
+  box-shadow: 0 24px 60px rgb(12 26 45 / 7%);
+  backdrop-filter: blur(18px);
+}
+
+.dark .surface {
+  border-color: rgb(118 245 195 / 12%);
+  background: rgb(12 26 45 / 72%);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 24%);
+}
+
+.grid-noise {
+  background-image:
+    linear-gradient(rgb(64 224 164 / 6%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(64 224 164 / 6%) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.focus-ring {
+  @apply outline-none transition focus-visible:ring-3 focus-visible:ring-mint-400/35 focus-visible:border-mint-400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
