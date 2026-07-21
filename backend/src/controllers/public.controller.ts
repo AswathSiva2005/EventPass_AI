@@ -11,11 +11,12 @@ export const listEventsController = asyncHandler(async (request, response) => {
     ...(request.query.upcoming === "true"
       ? { startsAt: { $gt: now }, registrationClosesAt: { $gte: now } }
       : {})
-  })
+    })
     .select(
-      "name code description college venue startsAt endsAt registrationClosesAt capacity registrationCount status"
+      "name code description college departments venue startsAt endsAt registrationClosesAt capacity registrationCount status"
     )
     .populate("college", "name code")
+    .populate("departments", "name code college")
     .sort({ startsAt: 1 })
     .lean();
   // A deleted reference is populated as null. Do not publish an event that

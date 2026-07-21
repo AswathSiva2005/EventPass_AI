@@ -78,6 +78,33 @@ body {
   @apply outline-none transition focus-visible:ring-3 focus-visible:ring-mint-400/35 focus-visible:border-mint-400;
 }
 
+select {
+  color: #122033;
+}
+
+select option {
+  background-color: #ffffff;
+  color: #122033;
+}
+
+.dark select {
+  background-color: #0c1a2d;
+  color: #edf8f4;
+}
+
+.dark select option {
+  background-color: #0c1a2d;
+  color: #edf8f4;
+}
+
+select:disabled {
+  color: #64748b;
+}
+
+.dark select:disabled {
+  color: #94a3b8;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

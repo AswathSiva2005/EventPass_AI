@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "EventPass Volunteer",
+    "slug": "eventpass-volunteer-mobile",
+    "scheme": "eventpassvolunteer",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": ["ios", "android", "web"],
+    "userInterfaceStyle": "automatic",
+    "plugins": ["expo-router"],
+    "assetBundlePatterns": ["**/*"],
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0b1220"
+      }
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    }
+  }
+}
