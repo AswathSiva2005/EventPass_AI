@@ -3,11 +3,14 @@ import {
   registerStudent,
   trackStudentRegistration,
   getStudentVerificationRecord,
+  getStudentPassData,
+  searchStudents,
+  type StudentSearchField,
   type RegistrationFiles,
   type RegistrationInput
 } from "../services/registration.service.js";
 import { getVolunteerAttendanceExportRows, listVolunteerExportEvents, recordStudentAttendance } from "../services/attendance.service.js";
-import { createExcelExport } from "../services/export.service.js";
+import { createExcelExport, createStudentPassPdf } from "../services/export.service.js";
 import { AppError } from "../utils/app-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import { sendSuccess } from "../utils/response.js";
@@ -84,12 +87,38 @@ export const trackStudentController = asyncHandler(async (request, response) => 
   });
 });
 
+export const studentPassController = asyncHandler(async (request, response) => {
+  const value = request.params.registrationId;
+  const registrationId = typeof value === "string" ? value : "";
+  const pass = await getStudentPassData(registrationId);
+  const file = await createStudentPassPdf(pass);
+  response.status(200).set({
+    "Content-Type": "application/pdf",
+    "Content-Disposition": `attachment; filename="${pass.registrationId.toLowerCase()}-event-pass.pdf"`,
+    "Content-Length": file.length.toString()
+  }).end(file);
+});
+
 export const getStudentVerificationController = asyncHandler(async (request, response) => {
   const value = request.params.registrationId;
   const registration = await getStudentVerificationRecord(typeof value === "string" ? value : "");
   sendSuccess(response, {
     message: "Student verification record retrieved",
     data: registration
+  });
+});
+
+export const searchStudentsController = asyncHandler(async (request, response) => {
+  const result = await searchStudents({
+    query: typeof request.query.q === "string" ? request.query.q : "",
+    field: (typeof request.query.field === "string" ? request.query.field : "all") as StudentSearchField,
+    page: typeof request.query.page === "number" ? request.query.page : 1,
+    limit: typeof request.query.limit === "number" ? request.query.limit : 20
+  });
+  sendSuccess(response, {
+    message: "Students retrieved",
+    data: result.items,
+    meta: { page: result.page, limit: result.limit, total: result.total, totalPages: result.totalPages }
   });
 });
 

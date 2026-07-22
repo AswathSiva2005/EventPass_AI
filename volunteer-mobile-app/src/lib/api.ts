@@ -1,5 +1,5 @@
 import { secureStorage } from "./storage";
-import type { AuthUserModel, ExportEvent, LoginSession, StudentRecord } from "./types";
+import type { AuthUserModel, ExportEvent, LoginSession, StudentRecord, StudentSearchField, StudentSearchPage } from "./types";
 
 export const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:5001/api/v1";
 const refreshTokenKey = "eventpass.volunteer.refreshToken";
@@ -9,9 +9,9 @@ const jsonHeaders = {
   "Content-Type": "application/json"
 };
 
-const parseResponse = async <T>(response: Response): Promise<T> => {
+const parseEnvelope = async <T>(response: Response): Promise<{ data?: T; meta?: { page: number; limit: number; total: number; totalPages: number } }> => {
   const rawText = await response.text();
-  let payload: { data?: T; error?: { message?: string }; message?: string } = {};
+  let payload: { data?: T; meta?: { page: number; limit: number; total: number; totalPages: number }; error?: { message?: string }; message?: string } = {};
   if (rawText) {
     try {
       payload = JSON.parse(rawText) as typeof payload;
@@ -26,6 +26,11 @@ const parseResponse = async <T>(response: Response): Promise<T> => {
     throw new Error(payload.error?.message ?? payload.message ?? "Request failed");
   }
 
+  return payload;
+};
+
+const parseResponse = async <T>(response: Response): Promise<T> => {
+  const payload = await parseEnvelope<T>(response);
   return (payload.data ?? (payload as T)) as T;
 };
 
@@ -124,6 +129,14 @@ export const api = {
 
   getExportEvents: async (accessToken: string) =>
     await requestJson<ExportEvent[]>("/students/attendance/export-events", { method: "GET" }, accessToken),
+
+  searchStudents: async (accessToken: string, query: string, field: StudentSearchField, page = 1, limit = 20): Promise<StudentSearchPage> => {
+    const params = new URLSearchParams({ q: query, field, page: String(page), limit: String(limit) });
+    const response = await fetch(`${apiBaseUrl}/students/search?${params}`, { headers: { Accept: "application/json", Authorization: `Bearer ${accessToken}` } });
+    const payload = await parseEnvelope<StudentRecord[]>(response);
+    const meta = payload.meta ?? { page, limit, total: payload.data?.length ?? 0, totalPages: 1 };
+    return { items: payload.data ?? [], ...meta };
+  },
 
   getStoredRefreshToken: async () => await secureStorage.get(refreshTokenKey),
   clearStoredRefreshToken: async () => await secureStorage.set(refreshTokenKey, null)

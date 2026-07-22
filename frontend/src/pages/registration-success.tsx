@@ -1,9 +1,12 @@
-import { ArrowRight, CheckCircle2, Copy, QrCode } from "lucide-react";
+import { ArrowRight, CheckCircle2, Copy, Download, QrCode } from "lucide-react";
 import { motion } from "motion/react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { StatusPill } from "../components/ui/status-pill";
 import type { RegistrationResult } from "../types/api";
+import { downloadRegistrationPass } from "../api/student";
+import { getErrorMessage } from "../utils/errors";
 
 const isRegistrationResult = (value: unknown): value is RegistrationResult =>
   typeof value === "object" &&
@@ -14,6 +17,8 @@ const isRegistrationResult = (value: unknown): value is RegistrationResult =>
 export const RegistrationSuccessPage = () => {
   const location = useLocation();
   const registration = isRegistrationResult(location.state) ? location.state : null;
+  const [showIdReminder, setShowIdReminder] = useState(Boolean(registration?.registrationId));
+  const [downloading, setDownloading] = useState(false);
 
   if (!registration?.registrationId) {
     return (
@@ -33,7 +38,30 @@ export const RegistrationSuccessPage = () => {
     toast.success("Registration ID copied");
   };
 
+  const downloadPass = async () => {
+    try {
+      setDownloading(true);
+      await downloadRegistrationPass(registration.registrationId);
+      toast.success("Event pass downloaded");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Unable to download the event pass."));
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
+    <>
+    {showIdReminder && <div className="fixed inset-0 z-[100] grid place-items-center bg-ink-950/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="registration-id-title">
+      <motion.div initial={{ opacity: 0, scale: .92, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="w-full max-w-md rounded-3xl border border-emerald-300/30 bg-white p-6 text-center shadow-2xl dark:bg-ink-900">
+        <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-mint-300/10 dark:text-mint-300"><CheckCircle2 size={30}/></span>
+        <h2 id="registration-id-title" className="mt-4 font-display text-2xl font-bold">Keep your registration ID safe</h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">You need this ID to track your registration and download your event pass.</p>
+        <button type="button" onClick={() => void copyId()} className="focus-ring mt-5 flex w-full items-center justify-between rounded-xl bg-slate-100 px-4 py-4 font-mono text-base font-extrabold text-ink-950 dark:bg-white/8 dark:text-white">{registration.registrationId}<Copy size={18}/></button>
+        <button type="button" disabled={downloading} onClick={() => void downloadPass()} className="focus-ring mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-ink-950 hover:border-emerald-400 disabled:opacity-55 dark:border-white/12 dark:bg-white/5 dark:text-white"><Download size={17}/>{downloading ? "Preparing PDF…" : "Download pass PDF"}</button>
+        <button type="button" onClick={() => setShowIdReminder(false)} className="focus-ring mt-4 min-h-11 w-full rounded-xl bg-emerald-700 px-5 text-sm font-bold text-white hover:bg-emerald-800">I saved my ID</button>
+      </motion.div>
+    </div>}
     <section className="page-shell grid min-h-[72vh] place-items-center py-16">
       <motion.div initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} className="surface w-full max-w-2xl overflow-hidden rounded-[2rem]">
         <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 px-6 py-10 text-center text-white dark:from-emerald-900 dark:to-ink-950">
@@ -62,9 +90,10 @@ export const RegistrationSuccessPage = () => {
               </div>
             </div>
           </div>
-          <Link to="/track" className="focus-ring mt-8 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-ink-950 px-5 text-sm font-bold text-white dark:bg-mint-300 dark:text-ink-950">Track this registration <ArrowRight size={17} /></Link>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2"><button type="button" disabled={downloading} onClick={() => void downloadPass()} className="focus-ring flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-ink-950 hover:border-emerald-400 disabled:opacity-55 dark:border-white/12 dark:bg-white/5 dark:text-white"><Download size={17}/>{downloading ? "Preparing PDF…" : "Download pass PDF"}</button><Link to="/track" className="focus-ring flex min-h-12 items-center justify-center gap-2 rounded-xl bg-ink-950 px-5 text-sm font-bold text-white dark:bg-mint-300 dark:text-ink-950">Track registration <ArrowRight size={17} /></Link></div>
         </div>
       </motion.div>
     </section>
+    </>
   );
 };

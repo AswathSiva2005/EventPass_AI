@@ -20,14 +20,6 @@ export const recordStudentAttendance = async (input: {
       if (!student) {
         throw new AppError("Registration was not found", 404, "REGISTRATION_NOT_FOUND");
       }
-      if (student.verificationStatus !== "approved") {
-        throw new AppError(
-          "Attendance is available only after registration approval",
-          409,
-          "REGISTRATION_NOT_APPROVED"
-        );
-      }
-
       const now = new Date();
       if (input.action === "entry") {
         if (student.attendanceStatus !== "registered") {

@@ -9,6 +9,7 @@ interface CacheContextValue {
   attendanceEvents: AttendanceEvent[];
   pendingCount: number;
   cacheStudent: (student: StudentRecord) => Promise<void>;
+  removeRecentStudent: (registrationId: string) => Promise<void>;
   recordAttendance: (input: {
     student: StudentRecord;
     action: "entry" | "exit";
@@ -108,6 +109,11 @@ export const CacheProvider = ({ children }: { children: React.ReactNode }) => {
     []
   );
 
+  const removeRecentStudent = useCallback(async (registrationId: string) => {
+    const normalized = registrationId.toUpperCase();
+    setStudents((current) => current.filter((student) => student.registrationId !== normalized));
+  }, []);
+
   const clearCache = useCallback(async () => {
     setStudents([]);
     setAttendanceEvents([]);
@@ -143,11 +149,12 @@ export const CacheProvider = ({ children }: { children: React.ReactNode }) => {
       attendanceEvents,
       pendingCount,
       cacheStudent,
+      removeRecentStudent,
       recordAttendance,
       clearCache,
       findStudents
     }),
-    [attendanceEvents, cacheStudent, clearCache, findStudents, pendingCount, recordAttendance, students]
+    [attendanceEvents, cacheStudent, clearCache, findStudents, pendingCount, recordAttendance, removeRecentStudent, students]
   );
 
   return <CacheContext.Provider value={value}>{children}</CacheContext.Provider>;

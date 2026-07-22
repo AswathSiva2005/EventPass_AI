@@ -83,8 +83,8 @@ export default function StudentDetailsScreen() {
     return <EmptyState title="Student not found" description="That registration ID is not available in the cache or backend." />;
   }
 
-  const canMarkEntry = student.verificationStatus === "approved" && student.attendanceStatus === "registered";
-  const canMarkExit = student.verificationStatus === "approved" && student.attendanceStatus === "checked_in";
+  const canMarkEntry = student.attendanceStatus === "registered";
+  const canMarkExit = student.attendanceStatus === "checked_in";
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.ink }} contentContainerStyle={{ width: "100%", maxWidth: 920, alignSelf: "center", paddingHorizontal: 16, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28, gap: 16 }}>
@@ -134,9 +134,7 @@ export default function StudentDetailsScreen() {
       <Panel style={{ padding: 16, gap: 12 }}>
         <SectionTitle title="Attendance actions" />
         <Text style={{ color: colors.textSecondary, lineHeight: 20 }}>
-          {student.verificationStatus !== "approved"
-            ? "Attendance is locked until this registration is approved."
-            : student.attendanceStatus === "registered"
+          {student.attendanceStatus === "registered"
               ? "Ready for entry. Each action is permanently recorded once."
               : student.attendanceStatus === "checked_in"
                 ? "Entry is complete. Exit is now available once."

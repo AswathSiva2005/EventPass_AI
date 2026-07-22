@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import PDFDocument from "pdfkit";
+import QRCode from "qrcode";
 
 interface ExportRow {
   registrationId: string;
@@ -101,3 +102,49 @@ export const createPdfExport = (rows: ExportRow[]): Promise<Buffer> =>
     }
     document.end();
   });
+
+export const createStudentPassPdf = async (pass: {
+  registrationId: string;
+  studentName: string;
+  rollNumber: string;
+  year: number;
+  collegeName: string;
+  departmentName: string;
+  eventName: string;
+  eventStartsAt: Date;
+  eventEndsAt: Date;
+  venue: string;
+  verificationStatus: string;
+  qrValue: string;
+}): Promise<Buffer> => {
+  const qrImage = await QRCode.toBuffer(pass.qrValue, { type: "png", width: 520, margin: 1, errorCorrectionLevel: "H" });
+  return await new Promise((resolve, reject) => {
+    const document = new PDFDocument({ size: "A4", margin: 42 });
+    const chunks: Buffer[] = [];
+    document.on("data", (chunk: Buffer) => chunks.push(chunk));
+    document.on("end", () => resolve(Buffer.concat(chunks)));
+    document.on("error", reject);
+
+    document.roundedRect(42, 42, 511, 758, 18).fillAndStroke("#f8fafc", "#cbd5e1");
+    document.rect(42, 42, 511, 112).fill("#064e3b");
+    document.fillColor("#ffffff").font("Helvetica-Bold").fontSize(12).text("EVENTPASS AI", 70, 68);
+    document.fontSize(27).text("Student Event Pass", 70, 91);
+    document.font("Helvetica").fontSize(10).fillColor("#d1fae5").text(pass.eventName, 70, 126, { width: 450 });
+
+    document.image(qrImage, 180, 184, { width: 235, height: 235 });
+    document.fillColor("#0f172a").font("Helvetica-Bold").fontSize(15).text(pass.registrationId, 42, 437, { width: 511, align: "center" });
+    document.font("Helvetica").fontSize(9).fillColor("#64748b").text("Present this QR code to the volunteer at the entrance", 42, 461, { width: 511, align: "center" });
+
+    const row = (label: string, value: string, y: number) => {
+      document.fillColor("#64748b").font("Helvetica-Bold").fontSize(8).text(label.toUpperCase(), 78, y);
+      document.fillColor("#0f172a").font("Helvetica").fontSize(11).text(value, 78, y + 14, { width: 440 });
+    };
+    row("Student", pass.studentName, 505);
+    row("Roll number", `${pass.rollNumber} · Year ${pass.year}`, 552);
+    row("College and department", `${pass.collegeName} · ${pass.departmentName}`, 599);
+    row("Venue", pass.venue, 646);
+    row("Event schedule", `${pass.eventStartsAt.toLocaleString("en-IN")} – ${pass.eventEndsAt.toLocaleString("en-IN")}`, 693);
+    document.fillColor(pass.verificationStatus === "approved" ? "#047857" : "#b45309").font("Helvetica-Bold").fontSize(10).text(`Registration status: ${pass.verificationStatus.toUpperCase()}`, 78, 754);
+    document.end();
+  });
+};

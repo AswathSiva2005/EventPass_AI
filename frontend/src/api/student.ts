@@ -46,6 +46,16 @@ export const trackRegistration = async (
   return data.data;
 };
 
+export const downloadRegistrationPass = async (registrationId: string): Promise<void> => {
+  const response = await api.get<Blob>(`/students/pass/${encodeURIComponent(registrationId)}.pdf`, { responseType: "blob" });
+  const url = URL.createObjectURL(response.data);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${registrationId.toLowerCase()}-event-pass.pdf`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
 export const sendContactMessage = async (payload: {
   name: string;
   email: string;

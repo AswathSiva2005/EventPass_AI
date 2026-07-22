@@ -63,6 +63,13 @@ export const attendanceExportValidator = [
   param("eventId").isMongoId().withMessage("Event ID is invalid")
 ];
 
+export const studentSearchValidator = [
+  query("q").trim().isLength({ min: 1, max: 120 }).withMessage("Search query is required"),
+  query("field").optional().isIn(["all", "registrationId", "rollNumber", "phone", "college", "name", "code"]).withMessage("Search field is invalid"),
+  query("page").optional().isInt({ min: 1 }).toInt(),
+  query("limit").optional().isInt({ min: 1, max: 50 }).toInt()
+];
+
 export const departmentQueryValidator = [
   query("college").isMongoId().withMessage("College query parameter is invalid")
 ];

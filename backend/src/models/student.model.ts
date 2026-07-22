@@ -141,8 +141,11 @@ studentSchema.pre("validate", function validateAttendanceTimes() {
 });
 
 studentSchema.index({ event: 1, rollNumber: 1 }, { unique: true });
+studentSchema.index({ rollNumber: 1 });
 studentSchema.index({ event: 1, email: 1 }, { unique: true });
 studentSchema.index({ event: 1, phone: 1 }, { unique: true });
+studentSchema.index({ phone: 1 });
+studentSchema.index({ name: "text" });
 studentSchema.index({ "qrCode.value": 1 }, { unique: true });
 studentSchema.index({ "barcode.value": 1 }, { unique: true });
 studentSchema.index({ event: 1, verificationStatus: 1, createdAt: -1 });

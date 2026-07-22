@@ -205,7 +205,8 @@ export const SectionTitle = ({ title, action }: { title: string; action?: ReactN
 
 export const StudentCard = ({
   student,
-  onPress
+  onPress,
+  onLongPress
 }: {
   student: {
     registrationId: string;
@@ -216,8 +217,16 @@ export const StudentCard = ({
     venue: string;
   };
   onPress: () => void;
+  onLongPress?: () => void;
 }) => (
-  <Pressable onPress={onPress} style={({ pressed }) => [styles.studentCard, pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] }]}>
+  <Pressable
+    onPress={onPress}
+    onLongPress={onLongPress}
+    delayLongPress={500}
+    accessibilityRole="button"
+    accessibilityHint={onLongPress ? "Tap to open student details. Long press to remove from recent activity." : "Open student details."}
+    style={({ pressed }) => [styles.studentCard, pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] }]}
+  >
     <Text style={styles.studentName}>{student.studentName}</Text>
     <Text style={styles.studentMeta}>{student.registrationId} • {student.eventName}</Text>
     <Text style={styles.studentMeta}>{student.venue}</Text>

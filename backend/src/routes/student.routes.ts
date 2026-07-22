@@ -4,8 +4,10 @@ import {
   volunteerAttendanceExportController,
   volunteerExportEventsController,
   getStudentVerificationController,
+  searchStudentsController,
   registerStudentController,
-  trackStudentController
+  trackStudentController,
+  studentPassController
 } from "../controllers/student.controller.js";
 import { validateRegistrationFiles } from "../middlewares/registration-files.middleware.js";
 import { registrationUpload } from "../middlewares/upload.middleware.js";
@@ -15,6 +17,7 @@ import {
   attendanceActionValidator,
   attendanceExportValidator,
   registrationIdValidator,
+  studentSearchValidator,
   studentRegistrationValidator
 } from "../validators/registration.validator.js";
 
@@ -35,6 +38,12 @@ studentRouter.get(
   trackStudentController
 );
 studentRouter.get(
+  "/pass/:registrationId.pdf",
+  registrationIdValidator,
+  validateRequest,
+  studentPassController
+);
+studentRouter.get(
   "/attendance/export-events",
   authenticate,
   authorizeUserModels("Volunteer"),
@@ -47,6 +56,14 @@ studentRouter.get(
   attendanceExportValidator,
   validateRequest,
   volunteerAttendanceExportController
+);
+studentRouter.get(
+  "/search",
+  authenticate,
+  authorizeUserModels("Volunteer"),
+  studentSearchValidator,
+  validateRequest,
+  searchStudentsController
 );
 studentRouter.get(
   "/:registrationId/verification",

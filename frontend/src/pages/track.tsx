@@ -1,9 +1,9 @@
-import { CalendarDays, MapPin, QrCode, Search, TicketCheck } from "lucide-react";
+import { CalendarDays, Download, MapPin, QrCode, Search, TicketCheck } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { trackRegistration } from "../api/student";
+import { downloadRegistrationPass, trackRegistration } from "../api/student";
 import { Button } from "../components/ui/button";
 import { PageHeading } from "../components/ui/page-heading";
 import { StatusPill } from "../components/ui/status-pill";
@@ -13,6 +13,7 @@ import { formatEventDate } from "../utils/format";
 
 export const TrackPage = () => {
   const [result, setResult] = useState<RegistrationStatus>();
+  const [downloading, setDownloading] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<{ registrationId: string }>();
 
   const submit = async ({ registrationId }: { registrationId: string }) => {
@@ -21,6 +22,19 @@ export const TrackPage = () => {
     } catch (error) {
       setResult(undefined);
       toast.error(getErrorMessage(error, "Registration was not found."));
+    }
+  };
+
+  const downloadPass = async () => {
+    if (!result) return;
+    try {
+      setDownloading(true);
+      await downloadRegistrationPass(result.registrationId);
+      toast.success("Event pass downloaded");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Unable to download the event pass."));
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -65,6 +79,7 @@ export const TrackPage = () => {
               />
               <p className="mt-3 font-mono text-xs font-bold text-slate-600">{result.registrationId}</p>
               <p className="mt-2 text-xs text-slate-500">Present this QR code to the volunteer at the event entrance.</p>
+              <Button type="button" variant="secondary" loading={downloading} onClick={() => void downloadPass()} className="mt-5 w-full sm:w-auto" style={{color:'black'}}><Download size={17} /> Download pass PDF</Button>
             </div>
           )}
           <p className="mt-5 text-xs text-slate-500">Last updated {formatEventDate(result.updatedAt)}</p>

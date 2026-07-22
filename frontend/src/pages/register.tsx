@@ -296,7 +296,7 @@ export const RegisterPage = () => {
               className={inputClass}
               type="tel"
               autoComplete="tel"
-              placeholder="+919876543210"
+              placeholder="9876543210"
               {...register("phone", {
                 required: "Phone number is required",
                 pattern: { value: /^\+?[1-9]\d{7,14}$/, message: "Use a valid international phone number" }
@@ -339,7 +339,7 @@ export const RegisterPage = () => {
                 id="emergencyPhone"
                 className={inputClass}
                 type="tel"
-                placeholder="+919876543210"
+                placeholder="9876543210"
                 {...register("emergencyPhone", {
                   required: "Contact phone is required",
                   pattern: { value: /^\+?[1-9]\d{7,14}$/, message: "Enter a valid phone" }

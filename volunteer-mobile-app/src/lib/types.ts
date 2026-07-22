@@ -60,6 +60,16 @@ export interface ExportEvent {
   venue: { name: string; address: string };
 }
 
+export type StudentSearchField = "all" | "registrationId" | "rollNumber" | "phone" | "college" | "name" | "code";
+
+export interface StudentSearchPage {
+  items: StudentRecord[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export interface CacheSnapshot {
   students: StudentRecord[];
   attendanceEvents: AttendanceEvent[];

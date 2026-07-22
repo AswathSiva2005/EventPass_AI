@@ -1,12 +1,13 @@
 import { createHmac } from "node:crypto";
 import bwipjs from "bwip-js";
 import QRCode from "qrcode";
+import type { FilterQuery } from "mongoose";
 import { env } from "../config/env.js";
 import { CollegeModel } from "../models/college.model.js";
 import { DepartmentModel } from "../models/department.model.js";
 import { EventModel } from "../models/event.model.js";
 import { RegistrationCounterModel } from "../models/registration-counter.model.js";
-import { StudentModel } from "../models/student.model.js";
+import { StudentModel, type Student } from "../models/student.model.js";
 import { AppError } from "../utils/app-error.js";
 import { logger } from "../utils/logger.js";
 import { deleteAsset, uploadBuffer } from "./cloudinary.service.js";
@@ -281,6 +282,30 @@ export const trackStudentRegistration = async (registrationId: string) => {
   };
 };
 
+export const getStudentPassData = async (registrationId: string) => {
+  const student = await StudentModel.findOne({ registrationId: registrationId.toUpperCase() })
+    .populate<{ event: { name: string; startsAt: Date; endsAt: Date } }>("event", "name startsAt endsAt")
+    .populate<{ college: { name: string } }>("college", "name")
+    .populate<{ department: { name: string } }>("department", "name")
+    .select("registrationId name rollNumber year verificationStatus venue event college department qrCode.value")
+    .lean();
+  if (!student) throw new AppError("Registration was not found", 404, "REGISTRATION_NOT_FOUND");
+  return {
+    registrationId: student.registrationId,
+    studentName: student.name,
+    rollNumber: student.rollNumber,
+    year: student.year,
+    collegeName: student.college.name,
+    departmentName: student.department.name,
+    eventName: student.event.name,
+    eventStartsAt: student.event.startsAt,
+    eventEndsAt: student.event.endsAt,
+    venue: student.venue,
+    verificationStatus: student.verificationStatus,
+    qrValue: student.qrCode.value
+  };
+};
+
 export const getStudentVerificationRecord = async (registrationId: string) => {
   const student = await StudentModel.findOne({
     registrationId: registrationId.toUpperCase()
@@ -315,5 +340,81 @@ export const getStudentVerificationRecord = async (registrationId: string) => {
     entryTime: student.entryTime,
     exitTime: student.exitTime,
     updatedAt: student.updatedAt
+  };
+};
+
+export type StudentSearchField = "all" | "registrationId" | "rollNumber" | "phone" | "college" | "name" | "code";
+
+const escapeSearch = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+export const searchStudents = async (input: { query: string; field: StudentSearchField; page: number; limit: number }) => {
+  const raw = input.query.trim();
+  const normalized = raw.toUpperCase();
+  const prefix = new RegExp(`^${escapeSearch(raw)}`, "i");
+  const normalizedPrefix = new RegExp(`^${escapeSearch(normalized)}`);
+  const phone = raw.replace(/[\s()-]/g, "");
+  const collegeIds = input.field === "college" || input.field === "all"
+    ? await CollegeModel.find({ $or: [{ name: prefix }, { code: normalizedPrefix }] }).distinct("_id")
+    : [];
+
+  let filter: FilterQuery<Student>;
+  switch (input.field) {
+    case "registrationId": filter = { registrationId: normalizedPrefix }; break;
+    case "rollNumber": filter = { rollNumber: normalizedPrefix }; break;
+    case "phone": filter = { phone: new RegExp(`^${escapeSearch(phone)}`) }; break;
+    case "college": filter = { college: { $in: collegeIds } }; break;
+    case "name": filter = { $text: { $search: raw } }; break;
+    case "code": filter = { $or: [{ "qrCode.value": raw }, { "barcode.value": raw }, { registrationId: normalized }] }; break;
+    default:
+      filter = { $or: [
+        { registrationId: normalizedPrefix },
+        { rollNumber: normalizedPrefix },
+        { phone: new RegExp(`^${escapeSearch(phone)}`) },
+        { "qrCode.value": raw },
+        { "barcode.value": raw },
+        { name: prefix },
+        ...(collegeIds.length ? [{ college: { $in: collegeIds } }] : [])
+      ] };
+  }
+
+  const [students, total] = await Promise.all([
+    StudentModel.find(filter)
+      .select("registrationId name rollNumber year phone email verificationStatus attendanceStatus venue entryTime exitTime updatedAt event college department selfie idFront idBack")
+      .populate("event", "name startsAt")
+      .populate("college", "name code")
+      .populate("department", "name code")
+      .sort({ updatedAt: -1, _id: 1 })
+      .skip((input.page - 1) * input.limit)
+      .limit(input.limit)
+      .lean(),
+    StudentModel.countDocuments(filter)
+  ]);
+
+  return {
+    items: students.map((student) => ({
+      registrationId: student.registrationId,
+      studentName: student.name,
+      rollNumber: student.rollNumber,
+      year: student.year,
+      phone: student.phone,
+      email: student.email,
+      collegeName: (student.college as unknown as { name: string }).name,
+      departmentName: (student.department as unknown as { name: string }).name,
+      eventName: (student.event as unknown as { name: string }).name,
+      eventStartsAt: (student.event as unknown as { startsAt: Date }).startsAt,
+      verificationStatus: student.verificationStatus,
+      attendanceStatus: student.attendanceStatus,
+      selfie: { url: student.selfie.url },
+      idFront: { url: student.idFront.url },
+      idBack: { url: student.idBack.url },
+      venue: student.venue,
+      entryTime: student.entryTime,
+      exitTime: student.exitTime,
+      updatedAt: student.updatedAt
+    })),
+    total,
+    page: input.page,
+    limit: input.limit,
+    totalPages: Math.ceil(total / input.limit)
   };
 };
