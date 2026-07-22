@@ -2,6 +2,7 @@ import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 import { Types } from "mongoose";
 import { env } from "../config/env.js";
 import { AdminModel } from "../models/admin.model.js";
+import { CollegeModel } from "../models/college.model.js";
 import {
   AuthSessionModel,
   type AuthUserModel
@@ -23,6 +24,7 @@ interface AuthAccount {
   _id: Types.ObjectId;
   name: string;
   email: string;
+  phone?: string;
   passwordHash?: string;
   emailVerifiedAt?: Date;
   role?: string;
@@ -69,6 +71,23 @@ const findAccountByEmail = async (
   return await query.lean();
 };
 
+const findAccountForLogin = async (
+  identifier: string,
+  userModel: AuthUserModel,
+  includePassword = false
+): Promise<AuthAccount | null> => {
+  if (userModel === "Admin") {
+    return findAccountByEmail(identifier, userModel, includePassword);
+  }
+
+  const query = VolunteerModel.findOne({
+    phone: identifier,
+    status: "active"
+  });
+  if (includePassword) query.select("+passwordHash");
+  return await query.lean();
+};
+
 const findActiveAccountById = async (
   userId: string,
   userModel: AuthUserModel
@@ -92,6 +111,7 @@ const publicAccount = (account: AuthAccount, userModel: AuthUserModel) => ({
   id: account._id.toString(),
   name: account.name,
   email: account.email,
+  ...(account.phone ? { phone: account.phone } : {}),
   role: accountRole(account, userModel),
   userModel,
   emailVerified: Boolean(account.emailVerifiedAt)
@@ -139,18 +159,18 @@ const issueSession = async (input: {
 };
 
 export const login = async (input: {
-  email: string;
+  identifier: string;
   password: string;
   userModel: AuthUserModel;
   rememberLogin: boolean;
   context: ClientContext;
 }) => {
-  const account = await findAccountByEmail(input.email, input.userModel, true);
+  const account = await findAccountForLogin(input.identifier, input.userModel, true);
   if (
     !account?.passwordHash ||
     !(await verifyPassword(input.password, account.passwordHash))
   ) {
-    throw new AppError("Email or password is incorrect", 401, "INVALID_CREDENTIALS");
+    throw new AppError("Phone number or password is incorrect", 401, "INVALID_CREDENTIALS");
   }
   if (!account.emailVerifiedAt) {
     throw new AppError("Email verification is required", 403, "EMAIL_NOT_VERIFIED");
@@ -163,6 +183,63 @@ export const login = async (input: {
   return issueSession({
     account,
     userModel: input.userModel,
+    rememberLogin: input.rememberLogin,
+    context: input.context
+  });
+};
+
+export const registerVolunteer = async (input: {
+  name: string;
+  phone: string;
+  password: string;
+  rememberLogin: boolean;
+  context: ClientContext;
+}) => {
+  const existing = await VolunteerModel.exists({ phone: input.phone });
+  if (existing) {
+    throw new AppError("A volunteer with this phone number already exists", 409, "PHONE_ALREADY_REGISTERED");
+  }
+
+  const college = await CollegeModel.findOne({ isActive: true }).sort({ createdAt: 1 }).lean();
+  if (!college) {
+    throw new AppError(
+      "Volunteer registration is unavailable until an active college is configured",
+      503,
+      "COLLEGE_NOT_CONFIGURED"
+    );
+  }
+
+  const volunteerId = `VOL-${input.phone.replace(/\D/g, "").slice(-8)}-${randomUUID().slice(0, 6).toUpperCase()}`;
+  const internalEmail = `${volunteerId.toLowerCase()}@volunteer.eventpass.local`;
+
+  let account;
+  try {
+    account = await VolunteerModel.create({
+      volunteerId,
+      name: input.name,
+      email: internalEmail,
+      phone: input.phone,
+      passwordHash: await hashPassword(input.password),
+      college: college._id,
+      assignedEvents: [],
+      status: "active",
+      emailVerifiedAt: new Date()
+    });
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === 11000
+    ) {
+      throw new AppError("A volunteer with this phone number already exists", 409, "PHONE_ALREADY_REGISTERED");
+    }
+    throw error;
+  }
+
+  return issueSession({
+    account: account.toObject(),
+    userModel: "Volunteer",
     rememberLogin: input.rememberLogin,
     context: input.context
   });

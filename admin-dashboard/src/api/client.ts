@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseURL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:5000/api/v1";
+const baseURL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:5001/api/v1";
 const storageKey = "eventpass-admin-session";
 
 export interface StoredSession { accessToken: string; refreshToken: string; remember: boolean; }

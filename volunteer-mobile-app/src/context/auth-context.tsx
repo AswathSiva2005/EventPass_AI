@@ -7,9 +7,15 @@ interface AuthContextValue {
   accessToken: string | null;
   hydrated: boolean;
   signingIn: boolean;
-  login: (input: { email: string; password: string; rememberLogin: boolean }) => Promise<void>;
+  login: (input: { phone: string; password: string; rememberLogin: boolean }) => Promise<void>;
+  register: (input: { name: string; phone: string; password: string; rememberLogin: boolean }) => Promise<void>;
   logout: () => Promise<void>;
   loadStudent: (registrationId: string) => Promise<Awaited<ReturnType<typeof api.trackStudent>>>;
+  markAttendance: (
+    registrationId: string,
+    action: "entry" | "exit",
+    method: "qr" | "barcode" | "manual"
+  ) => Promise<Awaited<ReturnType<typeof api.recordAttendance>>>;
   refreshSession: () => Promise<void>;
 }
 
@@ -46,10 +52,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     void restoreSession();
   }, [restoreSession]);
 
-  const login = useCallback(async (input: { email: string; password: string; rememberLogin: boolean }) => {
+  const login = useCallback(async (input: { phone: string; password: string; rememberLogin: boolean }) => {
     setSigningIn(true);
     try {
       const session = await api.login(input);
+      setAccessToken(session.accessToken);
+      setAccount(session.user);
+    } finally {
+      setSigningIn(false);
+    }
+  }, []);
+
+  const register = useCallback(async (input: { name: string; phone: string; password: string; rememberLogin: boolean }) => {
+    setSigningIn(true);
+    try {
+      const session = await api.registerVolunteer(input);
       setAccessToken(session.accessToken);
       setAccount(session.user);
     } finally {
@@ -92,6 +109,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     [accessToken]
   );
 
+  const markAttendance = useCallback(
+    async (registrationId: string, action: "entry" | "exit", method: "qr" | "barcode" | "manual") => {
+      if (!accessToken) {
+        throw new Error("Sign in first.");
+      }
+      return await api.recordAttendance(accessToken, registrationId, { action, method });
+    },
+    [accessToken]
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       account,
@@ -99,11 +126,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       hydrated,
       signingIn,
       login,
+      register,
       logout,
       loadStudent,
+      markAttendance,
       refreshSession
     }),
-    [account, accessToken, hydrated, signingIn, login, logout, loadStudent, refreshSession]
+    [account, accessToken, hydrated, signingIn, login, register, logout, loadStudent, markAttendance, refreshSession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

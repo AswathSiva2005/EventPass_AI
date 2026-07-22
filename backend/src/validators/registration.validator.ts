@@ -49,6 +49,20 @@ export const registrationIdValidator = [
     .withMessage("Registration ID is invalid")
 ];
 
+export const attendanceActionValidator = [
+  ...registrationIdValidator,
+  body("action")
+    .isIn(["entry", "exit"])
+    .withMessage("Attendance action must be entry or exit"),
+  body("method")
+    .isIn(["qr", "barcode", "manual"])
+    .withMessage("Attendance method must be qr, barcode, or manual")
+];
+
+export const attendanceExportValidator = [
+  param("eventId").isMongoId().withMessage("Event ID is invalid")
+];
+
 export const departmentQueryValidator = [
   query("college").isMongoId().withMessage("College query parameter is invalid")
 ];

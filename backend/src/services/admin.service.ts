@@ -1,5 +1,6 @@
 import { Types, type FilterQuery } from "mongoose";
 import { AuditLogModel } from "../models/audit-log.model.js";
+import { AdminModel, type AdminRole } from "../models/admin.model.js";
 import { CollegeModel } from "../models/college.model.js";
 import { DepartmentModel } from "../models/department.model.js";
 import { EventModel, type EventStatus } from "../models/event.model.js";
@@ -11,6 +12,7 @@ import {
   type VerificationStatus
 } from "../models/student.model.js";
 import { AppError } from "../utils/app-error.js";
+import { hashPassword } from "./password.service.js";
 
 export interface RegistrationFilters {
   search?: string;
@@ -140,6 +142,59 @@ export const getDashboardStatistics = async () => {
     registrationTrend,
     collegeDistribution: collegeRaw
   };
+};
+
+export const listSubAdmins = async () =>
+  AdminModel.find({ role: { $ne: "super_admin" } })
+    .select("name email role isActive emailVerifiedAt lastLoginAt createdAt")
+    .sort({ createdAt: -1 })
+    .lean();
+
+export const createSubAdmin = async (input: {
+  name: string;
+  email: string;
+  password: string;
+  role: Exclude<AdminRole, "super_admin">;
+  createdBy: string;
+  ipAddress?: string;
+  userAgent?: string;
+}) => {
+  const passwordHash = await hashPassword(input.password);
+  try {
+    const admin = await AdminModel.create({
+      name: input.name,
+      email: input.email,
+      passwordHash,
+      role: input.role,
+      isActive: true,
+      emailVerifiedAt: new Date()
+    });
+    await AuditLogModel.create({
+      actor: input.createdBy,
+      actorType: "Admin",
+      action: "admin.created",
+      entityType: "Admin",
+      entityId: admin._id,
+      outcome: "success",
+      changes: { email: admin.email, role: admin.role },
+      ...(input.ipAddress ? { ipAddress: input.ipAddress } : {}),
+      ...(input.userAgent ? { userAgent: input.userAgent } : {})
+    });
+    return {
+      _id: admin._id,
+      name: admin.name,
+      email: admin.email,
+      role: admin.role,
+      isActive: admin.isActive,
+      emailVerifiedAt: admin.emailVerifiedAt,
+      createdAt: admin.createdAt
+    };
+  } catch (error) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === 11000) {
+      throw new AppError("An admin account already uses this email", 409, "DUPLICATE_ADMIN_EMAIL");
+    }
+    throw error;
+  }
 };
 
 export const listRegistrations = async (

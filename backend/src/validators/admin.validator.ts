@@ -64,3 +64,17 @@ export const bulkCollegeValidator = [
   body("colleges.*.departments.*.name").trim().isLength({ min: 2, max: 150 }),
   body("colleges.*.departments.*.code").trim().toUpperCase().matches(/^[A-Z0-9][A-Z0-9_-]{2,49}$/)
 ];
+
+export const createSubAdminValidator = [
+  body("name").trim().isLength({ min: 2, max: 120 }).withMessage("Name must be 2 to 120 characters"),
+  body("email").isEmail().withMessage("A valid email address is required").normalizeEmail(),
+  body("role").isIn(["admin", "event_manager"]).withMessage("Role must be admin or event_manager"),
+  body("password")
+    .isString()
+    .isLength({ min: 12, max: 128 })
+    .withMessage("Password must be 12 to 128 characters")
+    .matches(/[a-z]/).withMessage("Password must contain a lowercase letter")
+    .matches(/[A-Z]/).withMessage("Password must contain an uppercase letter")
+    .matches(/\d/).withMessage("Password must contain a number")
+    .matches(/[^A-Za-z0-9]/).withMessage("Password must contain a special character")
+];

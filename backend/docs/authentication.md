@@ -15,7 +15,7 @@ Authentication supports `Admin` and `Volunteer` accounts.
 - Password-reset action JWTs use a third signing secret and short lifetime.
 - Password reset revokes all existing sessions.
 - Login and OTP routes have dedicated rate limits.
-- Login errors do not reveal whether the email or password was incorrect.
+- Login errors do not reveal whether the account identifier or password was incorrect.
 - OTP requests return the same response for missing and existing accounts.
 
 ## Endpoints
@@ -25,6 +25,7 @@ All routes use the `/api/v1/auth` prefix.
 | Method | Route | Authentication | Purpose |
 | --- | --- | --- | --- |
 | `POST` | `/login` | Public, rate limited | Admin or Volunteer login |
+| `POST` | `/volunteer/register` | Public, rate limited | Create a phone-based volunteer account and session |
 | `POST` | `/refresh` | Refresh token | Rotate session and issue new tokens |
 | `POST` | `/logout` | Refresh token | Revoke one refresh session |
 | `POST` | `/otp/request` | Public, rate limited | Request password-reset or email-verification OTP |
@@ -48,7 +49,29 @@ Login:
 }
 ```
 
-`userModel` must be `Admin` or `Volunteer`. Store access tokens in application memory where possible. Volunteer mobile clients should store refresh tokens in Expo Secure Store. Browser clients should avoid local storage for tokens.
+`userModel` must be `Admin` or `Volunteer`. Admin login uses `email`; volunteer login uses a unique `phone`:
+
+```json
+{
+  "phone": "+919876543210",
+  "password": "StrongPassword!1",
+  "userModel": "Volunteer",
+  "rememberLogin": true
+}
+```
+
+Volunteer self-registration creates an active account and immediately returns the same access/refresh session shape as login:
+
+```json
+{
+  "name": "Volunteer Name",
+  "phone": "+919876543210",
+  "password": "StrongPassword!1",
+  "rememberLogin": true
+}
+```
+
+Phone numbers use international format and are unique. Volunteer registration passwords must be 8–128 characters and contain uppercase, lowercase, numeric, and special characters. Store access tokens in application memory where possible. Volunteer mobile clients should store refresh tokens in Expo Secure Store. Browser clients should avoid local storage for tokens.
 
 Request an OTP:
 

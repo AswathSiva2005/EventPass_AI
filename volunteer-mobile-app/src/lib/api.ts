@@ -1,7 +1,7 @@
 import { secureStorage } from "./storage";
-import type { AuthUserModel, LoginSession, StudentRecord } from "./types";
+import type { AuthUserModel, ExportEvent, LoginSession, StudentRecord } from "./types";
 
-const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:5000/api/v1";
+export const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:5001/api/v1";
 const refreshTokenKey = "eventpass.volunteer.refreshToken";
 
 const jsonHeaders = {
@@ -11,7 +11,16 @@ const jsonHeaders = {
 
 const parseResponse = async <T>(response: Response): Promise<T> => {
   const rawText = await response.text();
-  const payload = rawText ? (JSON.parse(rawText) as { data?: T; error?: { message?: string }; message?: string }) : {};
+  let payload: { data?: T; error?: { message?: string }; message?: string } = {};
+  if (rawText) {
+    try {
+      payload = JSON.parse(rawText) as typeof payload;
+    } catch {
+      throw new Error(
+        `API returned ${response.status} ${response.statusText} instead of JSON. Check EXPO_PUBLIC_API_URL and the backend server.`
+      );
+    }
+  }
 
   if (!response.ok) {
     throw new Error(payload.error?.message ?? payload.message ?? "Request failed");
@@ -43,7 +52,7 @@ const requestJson = async <T>(
 
 export const api = {
   login: async (input: {
-    email: string;
+    phone: string;
     password: string;
     rememberLogin: boolean;
   }) => {
@@ -54,6 +63,21 @@ export const api = {
         ...input,
         userModel: "Volunteer" satisfies AuthUserModel
       })
+    });
+    await secureStorage.set(refreshTokenKey, session.refreshToken);
+    return session;
+  },
+
+  registerVolunteer: async (input: {
+    name: string;
+    phone: string;
+    password: string;
+    rememberLogin: boolean;
+  }) => {
+    const session = await requestJson<LoginSession>("/auth/volunteer/register", {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify(input)
     });
     await secureStorage.set(refreshTokenKey, session.refreshToken);
     return session;
@@ -83,8 +107,23 @@ export const api = {
   },
 
   trackStudent: async (accessToken: string, registrationId: string) => {
-    return await requestJson<StudentRecord>(`/students/track/${encodeURIComponent(registrationId)}`, { method: "GET" }, accessToken);
+    return await requestJson<StudentRecord>(`/students/${encodeURIComponent(registrationId)}/verification`, { method: "GET" }, accessToken);
   },
+
+  recordAttendance: async (
+    accessToken: string,
+    registrationId: string,
+    input: { action: "entry" | "exit"; method: "qr" | "barcode" | "manual" }
+  ) => {
+    return await requestJson<StudentRecord>(
+      `/students/${encodeURIComponent(registrationId)}/attendance`,
+      { method: "POST", headers: jsonHeaders, body: JSON.stringify(input) },
+      accessToken
+    );
+  },
+
+  getExportEvents: async (accessToken: string) =>
+    await requestJson<ExportEvent[]>("/students/attendance/export-events", { method: "GET" }, accessToken),
 
   getStoredRefreshToken: async () => await secureStorage.get(refreshTokenKey),
   clearStoredRefreshToken: async () => await secureStorage.set(refreshTokenKey, null)

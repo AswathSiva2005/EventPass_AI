@@ -1,22 +1,27 @@
 import { Tabs } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import type { ColorValue } from "react-native";
 import { colors } from "../../src/components/ui";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const tabIcon = (name: keyof typeof MaterialCommunityIcons.glyphMap) =>
-  ({ color, size }: { color: string; size: number }) => <MaterialCommunityIcons name={name} size={size} color={color} />;
+  ({ color, size }: { color: ColorValue; size: number }) => <MaterialCommunityIcons name={name} size={size} color={color} />;
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        sceneStyle: { backgroundColor: colors.ink, paddingTop: insets.top },
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: "#8da3c7",
         tabBarStyle: {
           backgroundColor: "#0b1220",
           borderTopColor: "rgba(255,255,255,0.08)",
           paddingTop: 6,
-          height: 68
+          height: 58 + insets.bottom,
+          paddingBottom: Math.max(insets.bottom, 6)
         },
         tabBarLabelStyle: {
           fontSize: 11,

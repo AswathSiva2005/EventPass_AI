@@ -11,11 +11,12 @@ const Registrations=lazy(()=>import("./pages/registrations").then(m=>({default:m
 const Events=lazy(()=>import("./pages/events").then(m=>({default:m.EventsPage})));
 const Login=lazy(()=>import("./pages/login").then(m=>({default:m.LoginPage})));
 const Colleges=lazy(()=>import("./pages/colleges").then(m=>({default:m.CollegesPage})));
+const AdminAccounts=lazy(()=>import("./pages/admin-accounts").then(m=>({default:m.AdminAccountsPage})));
 const loader=<div className="grid min-h-[60vh] place-items-center"><div className="size-9 animate-spin rounded-full border-3 border-slate-200 border-t-lime-400"/></div>;
 const router=createBrowserRouter([
   {path:"/login",element:<Login/>,errorElement:<RouteErrorPage/>},
   {element:<ProtectedRoute><Layout/></ProtectedRoute>,errorElement:<RouteErrorPage/>,children:[
-    {path:"/",element:<Dashboard/>},{path:"/registrations",element:<Registrations/>},{path:"/events",element:<Events/>},{path:"/colleges",element:<Colleges/>}
+    {path:"/",element:<Dashboard/>},{path:"/registrations",element:<Registrations/>},{path:"/events",element:<Events/>},{path:"/colleges",element:<Colleges/>},{path:"/admin-accounts",element:<AdminAccounts/>}
   ]}
 ]);
 export const App=()=> <AuthProvider><Suspense fallback={loader}><RouterProvider router={router}/><Toaster richColors closeButton position="top-right"/></Suspense></AuthProvider>;

@@ -3,27 +3,28 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ReactNode } from "react";
 import {
   ActivityIndicator,
+  ColorValue,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 export const colors = {
-  ink: "#0b1220",
-  panel: "rgba(11, 18, 32, 0.82)",
+  ink: "#0f172a",
+  panel: "rgba(30, 41, 59, 0.98)",
   panelLight: "rgba(255, 255, 255, 0.82)",
-  accent: "#22c55e",
-  accent2: "#7c3aed",
-  warning: "#f59e0b",
+  accent: "#4ade80",
+  accent2: "#38bdf8",
+  warning: "#fbbf24",
   danger: "#ef4444",
-  text: "#e5eefb",
-  muted: "#8da3c7"
+  text: "#f8fafc",
+  textSecondary: "#cbd5e1",
+  muted: "#b3c2d9"
 };
 
 export const Shell = ({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) => {
@@ -85,33 +86,51 @@ export const PrimaryButton = ({
   variant?: "primary" | "ghost" | "danger";
   disabled?: boolean;
 }) => {
-  const bg =
+  const bg: readonly [ColorValue, ColorValue] =
     variant === "danger"
       ? [colors.danger, "#b91c1c"]
       : variant === "ghost"
         ? ["rgba(255,255,255,0.12)", "rgba(255,255,255,0.06)"]
         : [colors.accent, "#16a34a"];
+  const foreground = variant === "primary" ? colors.ink : "#fff";
 
   return (
     <Pressable onPress={onPress} disabled={disabled} style={({ pressed }) => [styles.button, pressed && !disabled ? { transform: [{ scale: 0.98 }] } : null, disabled && { opacity: 0.55 }]}>
       <LinearGradient colors={bg} style={styles.buttonFill}>
-        {icon ? <MaterialCommunityIcons name={icon} size={18} color="#fff" /> : null}
-        <Text style={styles.buttonText}>{label}</Text>
+        {icon ? <MaterialCommunityIcons name={icon} size={18} color={foreground} /> : null}
+        <Text style={[styles.buttonText, { color: foreground }]}>{label}</Text>
       </LinearGradient>
     </Pressable>
   );
 };
 
-export const Input = (props: React.ComponentProps<typeof TextInput> & { icon?: keyof typeof MaterialCommunityIcons.glyphMap }) => (
-  <View style={styles.inputWrap}>
-    {props.icon ? <MaterialCommunityIcons name={props.icon} size={18} color={colors.muted} style={styles.inputIcon} /> : null}
-    <TextInput
-      placeholderTextColor="rgba(141, 163, 199, 0.7)"
-      {...props}
-      style={[styles.input, props.style]}
-    />
-  </View>
-);
+export const Input = (props: React.ComponentProps<typeof TextInput> & {
+  icon?: keyof typeof MaterialCommunityIcons.glyphMap;
+  rightIcon?: keyof typeof MaterialCommunityIcons.glyphMap;
+  onRightIconPress?: () => void;
+}) => {
+  const { icon, rightIcon, onRightIconPress, style, ...textInputProps } = props;
+  return (
+    <View style={styles.inputWrap}>
+      {icon ? <MaterialCommunityIcons name={icon} size={18} color={colors.muted} style={styles.inputIcon} /> : null}
+      <TextInput
+        placeholderTextColor="rgba(141, 163, 199, 0.7)"
+        {...textInputProps}
+        style={[styles.input, style]}
+      />
+      {rightIcon && onRightIconPress ? (
+        <Pressable
+          onPress={onRightIconPress}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={textInputProps.secureTextEntry ? "Show password" : "Hide password"}
+        >
+          <MaterialCommunityIcons name={rightIcon} size={20} color={colors.muted} />
+        </Pressable>
+      ) : null}
+    </View>
+  );
+};
 
 export const StatCard = ({
   label,
@@ -220,7 +239,11 @@ const styles = StyleSheet.create({
     gap: 16
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     overflow: "hidden"
   },
   glowA: {
@@ -248,8 +271,9 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
-    padding: 14
+    borderColor: "rgba(148, 163, 184, 0.28)",
+    backgroundColor: "#1e293b",
+    padding: 16
   },
   headerRow: {
     flexDirection: "row",
@@ -275,7 +299,7 @@ const styles = StyleSheet.create({
     fontWeight: "700"
   },
   title: {
-    color: "#fff",
+    color: "#86efac",
     fontSize: 26,
     fontWeight: "800",
     marginTop: 6
@@ -290,14 +314,14 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "rgba(148, 163, 184, 0.32)",
     backgroundColor: colors.panel
   },
   statCard: {
     flex: 1,
     padding: 14,
     gap: 8,
-    minHeight: 120
+    minHeight: 108
   },
   statIcon: {
     width: 34,
@@ -329,7 +353,6 @@ const styles = StyleSheet.create({
     gap: 8
   },
   buttonText: {
-    color: "#fff",
     fontSize: 15,
     fontWeight: "800"
   },
@@ -337,8 +360,8 @@ const styles = StyleSheet.create({
     minHeight: 54,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
-    backgroundColor: "rgba(255,255,255,0.06)",
+    borderColor: "rgba(148, 163, 184, 0.35)",
+    backgroundColor: "#111d31",
     paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center"
@@ -348,7 +371,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: "#fff",
+    color: colors.text,
     fontSize: 15,
     paddingVertical: 12
   },
@@ -393,19 +416,26 @@ const styles = StyleSheet.create({
   sectionTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
+    minHeight: 42,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 13,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.accent,
+    backgroundColor: "rgba(34, 197, 94, 0.10)"
   },
   sectionTitle: {
-    color: "#fff",
-    fontSize: 18,
+    color: "#dcfce7",
+    fontSize: 17,
     fontWeight: "800"
   },
   studentCard: {
     padding: 16,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.07)",
+    backgroundColor: "#111d31",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "rgba(148, 163, 184, 0.25)",
     gap: 6
   },
   studentName: {

@@ -11,11 +11,19 @@ const email = () =>
     .withMessage("A valid email address is required")
     .normalizeEmail();
 
-const password = (field = "password") =>
+const phone = () =>
+  body("phone")
+    .customSanitizer((value: unknown) =>
+      typeof value === "string" ? value.replace(/[\s()-]/g, "") : value
+    )
+    .matches(/^\+?[1-9]\d{7,14}$/)
+    .withMessage("Phone must be in international format, for example +919876543210");
+
+const password = (field = "password", minimumLength = 12) =>
   body(field)
     .isString()
-    .isLength({ min: 12, max: 128 })
-    .withMessage(`${field} must be 12 to 128 characters`)
+    .isLength({ min: minimumLength, max: 128 })
+    .withMessage(`${field} must be ${minimumLength} to 128 characters`)
     .matches(/[a-z]/)
     .withMessage(`${field} must contain a lowercase letter`)
     .matches(/[A-Z]/)
@@ -27,8 +35,29 @@ const password = (field = "password") =>
 
 export const loginValidator = [
   userModel(),
-  email(),
+  body("email")
+    .if(body("userModel").equals("Admin"))
+    .isEmail()
+    .withMessage("A valid email address is required")
+    .normalizeEmail(),
+  body("phone")
+    .if(body("userModel").equals("Volunteer"))
+    .customSanitizer((value: unknown) =>
+      typeof value === "string" ? value.replace(/[\s()-]/g, "") : value
+    )
+    .matches(/^\+?[1-9]\d{7,14}$/)
+    .withMessage("A valid phone number is required"),
   body("password").isString().notEmpty().withMessage("Password is required"),
+  body("rememberLogin").optional().isBoolean().withMessage("rememberLogin must be boolean")
+];
+
+export const registerVolunteerValidator = [
+  body("name")
+    .trim()
+    .isLength({ min: 2, max: 120 })
+    .withMessage("Name must be 2 to 120 characters"),
+  phone(),
+  password("password", 8),
   body("rememberLogin").optional().isBoolean().withMessage("rememberLogin must be boolean")
 ];
 

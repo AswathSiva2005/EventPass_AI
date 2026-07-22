@@ -1,21 +1,25 @@
 import { Router } from "express";
 import {
   createEventController,
+  createSubAdminController,
   bulkCollegesController,
   dashboardController,
   eventsController,
   excelExportController,
   pdfExportController,
   registrationsController,
+  subAdminsController,
   reviewController
 } from "../controllers/admin.controller.js";
 import {
   authenticate,
+  authorize,
   authorizeUserModels
 } from "../middlewares/auth.middleware.js";
 import { validateRequest } from "../middlewares/validation.middleware.js";
 import {
   createEventValidator,
+  createSubAdminValidator,
   bulkCollegeValidator,
   registrationListValidator,
   reviewRegistrationValidator
@@ -25,6 +29,8 @@ export const adminRouter = Router();
 
 adminRouter.use(authenticate, authorizeUserModels("Admin"));
 adminRouter.get("/dashboard", dashboardController);
+adminRouter.get("/accounts", authorize("super_admin"), subAdminsController);
+adminRouter.post("/accounts", authorize("super_admin"), createSubAdminValidator, validateRequest, createSubAdminController);
 adminRouter.get(
   "/registrations",
   registrationListValidator,

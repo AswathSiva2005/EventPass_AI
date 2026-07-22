@@ -5,6 +5,7 @@ export interface ApiResponse<T> {
   meta?: { page: number; limit: number; total: number; totalPages: number };
 }
 export interface AdminUser { id: string; name: string; email: string; role: string; userModel: "Admin"; }
+export interface SubAdmin { _id: string; name: string; email: string; role: "admin"|"event_manager"; isActive: boolean; emailVerifiedAt: string; lastLoginAt?: string; createdAt: string; }
 export interface DashboardData {
   totals: {
     todaysVisitors: number; totalRegistrations: number; insideCampus: number; exited: number;

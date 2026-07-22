@@ -6,6 +6,7 @@ import {
   login,
   logout,
   logoutAll,
+  registerVolunteer,
   refreshSession,
   requestOtp,
   resetPassword,
@@ -17,9 +18,17 @@ import { asyncHandler } from "../utils/async-handler.js";
 import { sendSuccess } from "../utils/response.js";
 
 interface LoginBody {
-  email: string;
+  email?: string;
+  phone?: string;
   password: string;
   userModel: AuthUserModel;
+  rememberLogin?: boolean;
+}
+
+interface RegisterVolunteerBody {
+  name: string;
+  phone: string;
+  password: string;
   rememberLogin?: boolean;
 }
 
@@ -48,13 +57,29 @@ const requireAuth = (request: Parameters<RequestHandler>[0]) => {
 export const loginController = asyncHandler(async (request, response) => {
   const body = request.body as LoginBody;
   const result = await login({
-    email: body.email,
+    identifier: body.userModel === "Volunteer" ? (body.phone ?? "") : (body.email ?? ""),
     password: body.password,
     userModel: body.userModel,
     rememberLogin: body.rememberLogin ?? false,
     context: clientContext(request)
   });
   sendSuccess(response, { message: "Login successful", data: result });
+});
+
+export const registerVolunteerController = asyncHandler(async (request, response) => {
+  const body = request.body as RegisterVolunteerBody;
+  const result = await registerVolunteer({
+    name: body.name,
+    phone: body.phone,
+    password: body.password,
+    rememberLogin: body.rememberLogin ?? true,
+    context: clientContext(request)
+  });
+  sendSuccess(response, {
+    statusCode: 201,
+    message: "Volunteer registration successful",
+    data: result
+  });
 });
 
 export const refreshController = asyncHandler(async (request, response) => {

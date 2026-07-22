@@ -4,6 +4,7 @@ export interface VolunteerAccount {
   id: string;
   name: string;
   email: string;
+  phone: string;
   role: string;
   userModel: AuthUserModel;
   emailVerified: boolean;
@@ -19,11 +20,22 @@ export interface LoginSession {
 export interface StudentRecord {
   registrationId: string;
   studentName: string;
+  rollNumber: string;
+  year: number;
+  phone: string;
+  email: string;
+  collegeName: string;
+  departmentName: string;
   eventName: string;
   eventStartsAt: string;
   verificationStatus: "pending" | "approved" | "rejected";
   attendanceStatus: "registered" | "checked_in" | "checked_out" | "absent";
   venue: string;
+  selfie: { url: string };
+  idFront: { url: string };
+  idBack: { url: string };
+  entryTime?: string;
+  exitTime?: string;
   updatedAt: string;
 }
 
@@ -36,6 +48,16 @@ export interface AttendanceEvent {
   method: "qr" | "barcode" | "manual";
   createdAt: string;
   synced: boolean;
+}
+
+export interface ExportEvent {
+  _id: string;
+  name: string;
+  code: string;
+  startsAt: string;
+  endsAt: string;
+  status: string;
+  venue: { name: string; address: string };
 }
 
 export interface CacheSnapshot {

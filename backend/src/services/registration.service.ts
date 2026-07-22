@@ -263,7 +263,7 @@ export const trackStudentRegistration = async (registrationId: string) => {
   })
     .populate<{ event: { name: string; startsAt: Date } }>("event", "name startsAt")
     .select(
-      "registrationId name verificationStatus attendanceStatus venue updatedAt event"
+      "registrationId name verificationStatus attendanceStatus venue updatedAt event qrCode.imageUrl"
     )
     .lean();
   if (!student) throw new AppError("Registration was not found", 404, "REGISTRATION_NOT_FOUND");
@@ -275,7 +275,45 @@ export const trackStudentRegistration = async (registrationId: string) => {
     eventStartsAt: student.event.startsAt,
     verificationStatus: student.verificationStatus,
     attendanceStatus: student.attendanceStatus,
+    qrCode: { imageUrl: student.qrCode.imageUrl },
     venue: student.venue,
+    updatedAt: student.updatedAt
+  };
+};
+
+export const getStudentVerificationRecord = async (registrationId: string) => {
+  const student = await StudentModel.findOne({
+    registrationId: registrationId.toUpperCase()
+  })
+    .populate<{ event: { name: string; startsAt: Date } }>("event", "name startsAt")
+    .populate<{ college: { name: string } }>("college", "name")
+    .populate<{ department: { name: string } }>("department", "name")
+    .select(
+      "registrationId name rollNumber year phone email verificationStatus attendanceStatus venue entryTime exitTime updatedAt event college department selfie idFront idBack"
+    )
+    .lean();
+
+  if (!student) throw new AppError("Registration was not found", 404, "REGISTRATION_NOT_FOUND");
+
+  return {
+    registrationId: student.registrationId,
+    studentName: student.name,
+    rollNumber: student.rollNumber,
+    year: student.year,
+    phone: student.phone,
+    email: student.email,
+    collegeName: student.college.name,
+    departmentName: student.department.name,
+    eventName: student.event.name,
+    eventStartsAt: student.event.startsAt,
+    verificationStatus: student.verificationStatus,
+    attendanceStatus: student.attendanceStatus,
+    selfie: { url: student.selfie.url },
+    idFront: { url: student.idFront.url },
+    idBack: { url: student.idBack.url },
+    venue: student.venue,
+    entryTime: student.entryTime,
+    exitTime: student.exitTime,
     updatedAt: student.updatedAt
   };
 };

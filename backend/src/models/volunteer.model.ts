@@ -16,7 +16,7 @@ export interface Volunteer {
   status: VolunteerStatus;
   emailVerifiedAt?: Date;
   lastLoginAt?: Date;
-  createdBy: Types.ObjectId;
+  createdBy?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,7 +56,7 @@ const volunteerSchema = new Schema<Volunteer>(
     status: { type: String, enum: volunteerStatuses, default: "invited", required: true },
     emailVerifiedAt: Date,
     lastLoginAt: Date,
-    createdBy: { type: Schema.Types.ObjectId, ref: "Admin", required: true }
+    createdBy: { type: Schema.Types.ObjectId, ref: "Admin" }
   },
   { timestamps: true, collection: "volunteers" }
 );

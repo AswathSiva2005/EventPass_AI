@@ -13,6 +13,7 @@ interface CacheContextValue {
     student: StudentRecord;
     action: "entry" | "exit";
     method: "qr" | "barcode" | "manual";
+    synced?: boolean;
   }) => Promise<void>;
   clearCache: () => Promise<void>;
   findStudents: (query: string) => StudentRecord[];
@@ -65,11 +66,13 @@ export const CacheProvider = ({ children }: { children: React.ReactNode }) => {
     async ({
       student,
       action,
-      method
+      method,
+      synced = false
     }: {
       student: StudentRecord;
       action: "entry" | "exit";
       method: "qr" | "barcode" | "manual";
+      synced?: boolean;
     }) => {
       const event: AttendanceEvent = {
         id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -79,10 +82,13 @@ export const CacheProvider = ({ children }: { children: React.ReactNode }) => {
         action,
         method,
         createdAt: new Date().toISOString(),
-        synced: false
+        synced
       };
 
       setAttendanceEvents((current) => {
+        if (current.some((item) => item.registrationId === student.registrationId && item.action === action)) {
+          return current;
+        }
         const next = [event, ...current].slice(0, 60);
         return next;
       });

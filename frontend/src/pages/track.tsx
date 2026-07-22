@@ -1,4 +1,4 @@
-import { CalendarDays, MapPin, Search, TicketCheck } from "lucide-react";
+import { CalendarDays, MapPin, QrCode, Search, TicketCheck } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -53,6 +53,20 @@ export const TrackPage = () => {
             <div className="rounded-2xl bg-slate-100 p-4 dark:bg-white/5"><p className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase"><MapPin size={15} /> Venue</p><p className="mt-3 text-sm font-bold">{result.venue}</p></div>
             <div className="rounded-2xl bg-slate-100 p-4 sm:col-span-2 dark:bg-white/5"><p className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase"><CalendarDays size={15} /> Event begins</p><p className="mt-3 text-sm font-bold">{formatEventDate(result.eventStartsAt)}</p></div>
           </div>
+          {result.qrCode?.imageUrl && (
+            <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-center dark:border-white/10">
+              <p className="flex items-center justify-center gap-2 text-xs font-bold text-slate-500 uppercase">
+                <QrCode size={16} /> Event QR pass
+              </p>
+              <img
+                src={result.qrCode.imageUrl}
+                alt={`QR pass for ${result.registrationId}`}
+                className="mx-auto mt-4 size-52 rounded-2xl border border-slate-200 bg-white p-3"
+              />
+              <p className="mt-3 font-mono text-xs font-bold text-slate-600">{result.registrationId}</p>
+              <p className="mt-2 text-xs text-slate-500">Present this QR code to the volunteer at the event entrance.</p>
+            </div>
+          )}
           <p className="mt-5 text-xs text-slate-500">Last updated {formatEventDate(result.updatedAt)}</p>
         </motion.article>
       )}

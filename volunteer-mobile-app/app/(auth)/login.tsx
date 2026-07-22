@@ -6,8 +6,9 @@ import { useAuth } from "../../src/context/auth-context";
 
 export default function LoginScreen() {
   const { login, signingIn, hydrated, account } = useAuth();
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberLogin, setRememberLogin] = useState(true);
 
   useEffect(() => {
@@ -17,13 +18,14 @@ export default function LoginScreen() {
   }, [account, hydrated, router]);
 
   const submit = async () => {
-    if (!email.trim() || !password) {
-      Alert.alert("Login required", "Enter your email and password.");
+    const normalizedPhone = phone.replace(/[\s()-]/g, "");
+    if (!/^\+?[1-9]\d{7,14}$/.test(normalizedPhone) || !password) {
+      Alert.alert("Login required", "Enter a valid phone number and password.");
       return;
     }
 
     try {
-      await login({ email: email.trim().toLowerCase(), password, rememberLogin });
+      await login({ phone: normalizedPhone, password, rememberLogin });
       router.replace("/(tabs)/dashboard");
     } catch (error) {
       Alert.alert("Login failed", error instanceof Error ? error.message : "Unable to sign in.");
@@ -42,10 +44,19 @@ export default function LoginScreen() {
 
           <Panel style={{ padding: 18, gap: 14 }}>
             <Text style={{ color: "#fff", fontSize: 18, fontWeight: "800" }}>Sign in</Text>
-            <Input value={email} onChangeText={setEmail} placeholder="Volunteer email" keyboardType="email-address" autoCapitalize="none" icon="email-outline" />
-            <Input value={password} onChangeText={setPassword} placeholder="Password" secureTextEntry icon="lock-outline" />
+            <Input value={phone} onChangeText={setPhone} placeholder="Phone, e.g. +919876543210" keyboardType="phone-pad" autoCapitalize="none" icon="phone-outline" />
+            <Input
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              secureTextEntry={!showPassword}
+              icon="lock-outline"
+              rightIcon={showPassword ? "eye-off-outline" : "eye-outline"}
+              onRightIconPress={() => setShowPassword((value) => !value)}
+            />
             <PrimaryButton label={rememberLogin ? "Remember session" : "Forget session"} icon={rememberLogin ? "toggle-switch" : "toggle-switch-off-outline"} onPress={() => setRememberLogin((value) => !value)} variant="ghost" />
             <PrimaryButton label={signingIn ? "Signing in..." : "Login"} icon="login" onPress={() => void submit()} disabled={signingIn} />
+            <PrimaryButton label="Create volunteer account" icon="account-plus-outline" onPress={() => router.push("/(auth)/register")} variant="ghost" disabled={signingIn} />
             <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
               <Badge label="secure login" />
               <Badge label="refresh tokens" tone="muted" />
@@ -54,7 +65,7 @@ export default function LoginScreen() {
           </Panel>
 
           <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: "center", paddingHorizontal: 18 }}>
-            Use the same volunteer account created in the backend. Access tokens stay in memory; refresh tokens are stored securely on device.
+            Sign in with the unique phone number used during registration. Access tokens stay in memory; refresh tokens are stored securely on device.
           </Text>
         </View>
       </KeyboardAvoidingView>

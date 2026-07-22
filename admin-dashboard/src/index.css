@@ -12,10 +12,10 @@
 
 :root { color-scheme: light; font-synthesis: none; }
 :root.dark { color-scheme: dark; }
-body { margin: 0; min-width: 320px; min-height: 100vh; background: #f4f6f3; color: #111b2b; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: #e2e8f0; color: #111b2b; }
 .dark body { background: #08111f; color: #f4f8ef; }
 ::selection { background: rgb(150 233 79 / 35%); }
-.panel { border: 1px solid rgb(15 35 50 / 9%); background: rgb(255 255 255 / 88%); box-shadow: 0 20px 55px rgb(8 17 31 / 6%); }
+.panel { border: 1px solid rgb(71 85 105 / 16%); background: rgb(248 250 252 / 94%); box-shadow: 0 18px 45px rgb(51 65 85 / 10%); }
 .dark .panel { border-color: rgb(255 255 255 / 8%); background: rgb(16 28 45 / 82%); box-shadow: 0 24px 70px rgb(0 0 0 / 22%); }
 .focus-ring { @apply outline-none transition focus-visible:ring-3 focus-visible:ring-lime-400/35; }
 select { color: #111b2b; }

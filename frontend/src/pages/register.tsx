@@ -77,7 +77,11 @@ export const RegisterPage = () => {
 
   const selectedEvent = useMemo(() => events.find((event) => event._id === eventId), [eventId, events]);
   const selectedEventCollegeId =
-    selectedEvent && typeof selectedEvent.college !== "string" ? selectedEvent.college._id : typeof selectedEvent?.college === "string" ? selectedEvent.college : "";
+    selectedEvent?.college && typeof selectedEvent.college !== "string"
+      ? selectedEvent.college._id
+      : typeof selectedEvent?.college === "string"
+        ? selectedEvent.college
+        : "";
   const selectedEventDepartments = useMemo(() => selectedEvent?.departments ?? [], [selectedEvent]);
 
   const fingerprintFile = async (file: File) => {
@@ -115,7 +119,10 @@ export const RegisterPage = () => {
     }
 
     if (selectedEventDepartments.length === 1) {
-      setValue("department", selectedEventDepartments[0]._id, { shouldDirty: false, shouldValidate: true });
+      const onlyDepartment = selectedEventDepartments[0];
+      if (onlyDepartment) {
+        setValue("department", onlyDepartment._id, { shouldDirty: false, shouldValidate: true });
+      }
       return;
     }
 

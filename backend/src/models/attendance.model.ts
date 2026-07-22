@@ -1,4 +1,4 @@
-import { model, models, Schema, type HydratedDocument, type Types } from "mongoose";
+import { model, models, Schema, type HydratedDocument, type Model, type Types } from "mongoose";
 
 export const attendanceMethods = ["qr", "barcode", "manual"] as const;
 export type AttendanceMethod = (typeof attendanceMethods)[number];
@@ -52,5 +52,6 @@ attendanceSchema.index({ event: 1, status: 1, checkInAt: -1 });
 attendanceSchema.index({ checkedInBy: 1, checkInAt: -1 });
 
 export type AttendanceDocument = HydratedDocument<Attendance>;
-export const AttendanceModel =
-  models.Attendance ?? model<Attendance>("Attendance", attendanceSchema);
+export const AttendanceModel: Model<Attendance> =
+  (models.Attendance as Model<Attendance> | undefined) ??
+  model<Attendance>("Attendance", attendanceSchema);

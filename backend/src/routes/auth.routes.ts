@@ -6,6 +6,7 @@ import {
   logoutController,
   meController,
   refreshController,
+  registerVolunteerController,
   requestOtpController,
   resetPasswordController,
   revokeSessionController,
@@ -17,6 +18,7 @@ import { validateRequest } from "../middlewares/validation.middleware.js";
 import {
   loginValidator,
   refreshValidator,
+  registerVolunteerValidator,
   requestOtpValidator,
   resetPasswordValidator,
   sessionIdValidator,
@@ -37,6 +39,7 @@ const sensitiveLimit = rateLimit({
 });
 
 authRouter.post("/login", sensitiveLimit, loginValidator, validateRequest, loginController);
+authRouter.post("/volunteer/register", sensitiveLimit, registerVolunteerValidator, validateRequest, registerVolunteerController);
 authRouter.post("/refresh", refreshValidator, validateRequest, refreshController);
 authRouter.post("/logout", refreshValidator, validateRequest, logoutController);
 authRouter.post("/otp/request", sensitiveLimit, requestOtpValidator, validateRequest, requestOtpController);

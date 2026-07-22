@@ -1,9 +1,11 @@
 import type { Request } from "express";
 import {
   createEvent,
+  createSubAdmin,
   getDashboardStatistics,
   getRegistrationExportData,
   listAdminEvents,
+  listSubAdmins,
   listRegistrations,
   reviewRegistration,
   upsertColleges,
@@ -62,6 +64,18 @@ const context = (request: Request) => {
 export const dashboardController = asyncHandler(async (_request, response) => {
   const statistics = await getDashboardStatistics();
   sendSuccess(response, { message: "Dashboard statistics retrieved", data: statistics });
+});
+
+export const subAdminsController = asyncHandler(async (_request, response) => {
+  const admins = await listSubAdmins();
+  sendSuccess(response, { message: "Sub-admin accounts retrieved", data: admins });
+});
+
+export const createSubAdminController = asyncHandler(async (request, response) => {
+  const identity = auth(request);
+  const body = request.body as { name: string; email: string; password: string; role: "admin" | "event_manager" };
+  const admin = await createSubAdmin({ ...body, createdBy: identity.userId, ...context(request) });
+  sendSuccess(response, { statusCode: 201, message: "Sub-admin account created", data: admin });
 });
 
 export const registrationsController = asyncHandler(async (request, response) => {

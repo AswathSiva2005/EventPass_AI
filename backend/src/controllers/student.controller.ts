@@ -2,9 +2,12 @@ import type { RequestHandler } from "express";
 import {
   registerStudent,
   trackStudentRegistration,
+  getStudentVerificationRecord,
   type RegistrationFiles,
   type RegistrationInput
 } from "../services/registration.service.js";
+import { getVolunteerAttendanceExportRows, listVolunteerExportEvents, recordStudentAttendance } from "../services/attendance.service.js";
+import { createExcelExport } from "../services/export.service.js";
 import { AppError } from "../utils/app-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import { sendSuccess } from "../utils/response.js";
@@ -79,4 +82,54 @@ export const trackStudentController = asyncHandler(async (request, response) => 
     message: "Registration status retrieved",
     data: registration
   });
+});
+
+export const getStudentVerificationController = asyncHandler(async (request, response) => {
+  const value = request.params.registrationId;
+  const registration = await getStudentVerificationRecord(typeof value === "string" ? value : "");
+  sendSuccess(response, {
+    message: "Student verification record retrieved",
+    data: registration
+  });
+});
+
+export const recordStudentAttendanceController = asyncHandler(async (request, response) => {
+  if (!request.auth) {
+    throw new AppError("Authentication is required", 401, "AUTHENTICATION_REQUIRED");
+  }
+  const value = request.params.registrationId;
+  const body = request.body as {
+    action: "entry" | "exit";
+    method: "qr" | "barcode" | "manual";
+  };
+  const student = await recordStudentAttendance({
+    registrationId: typeof value === "string" ? value : "",
+    action: body.action,
+    method: body.method,
+    volunteerId: request.auth.userId
+  });
+  sendSuccess(response, {
+    message: body.action === "entry" ? "Entry recorded" : "Exit recorded",
+    data: student
+  });
+});
+
+export const volunteerExportEventsController = asyncHandler(async (request, response) => {
+  const identity = request.auth;
+  if (!identity) throw new AppError("Authentication is required", 401, "AUTHENTICATION_REQUIRED");
+  const events = await listVolunteerExportEvents(identity.userId);
+  sendSuccess(response, { message: "Attendance export events retrieved", data: events });
+});
+
+export const volunteerAttendanceExportController = asyncHandler(async (request, response) => {
+  const identity = request.auth;
+  if (!identity) throw new AppError("Authentication is required", 401, "AUTHENTICATION_REQUIRED");
+  const value = request.params.eventId;
+  const { event, students } = await getVolunteerAttendanceExportRows(identity.userId, typeof value === "string" ? value : "");
+  const file = await createExcelExport(students);
+  response.status(200).set({
+    "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "Content-Disposition": `attachment; filename="${event.code.toLowerCase()}-attendance.xlsx"`,
+    "Content-Length": file.length.toString()
+  }).end(file);
 });
