@@ -87,7 +87,7 @@ const studentSchema = new Schema<Student>(
     },
     college: { type: Schema.Types.ObjectId, ref: "College", required: true, immutable: true },
     department: { type: Schema.Types.ObjectId, ref: "Department", required: true, immutable: true },
-    year: { type: Number, required: true, min: 1, max: 8, validate: Number.isInteger },
+    year: { type: Number, required: true, min: 1, max: 4, validate: Number.isInteger },
     phone: {
       type: String,
       required: true,

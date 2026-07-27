@@ -37,6 +37,7 @@ export const EventCard = ({ event, index = 0 }: { event: Event; index?: number }
       <p className="mt-5 line-clamp-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
         {event.description}
       </p>
+      {event.eventType && <div className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-xs dark:bg-mint-300/10"><p className="font-bold text-emerald-800 dark:text-mint-300">{event.eventType}</p>{event.eventTypeDescription && <p className="mt-1 text-slate-600 dark:text-slate-300">{event.eventTypeDescription}</p>}<p className="mt-1 text-slate-500 dark:text-slate-400">Team size: {event.teamSize === 1 ? "1 person" : `${event.teamSize ?? 1} people`}</p></div>}
       <div className="mt-5 space-y-2 border-t border-slate-200/70 pt-4 text-sm text-slate-600 dark:border-white/10 dark:text-slate-300">
         <p className="flex items-center gap-2"><Clock3 size={15} />{formatEventDate(event.startsAt)}</p>
         <p className="flex items-center gap-2"><MapPin size={15} />{event.venue?.name || "Venue to be announced"}</p>

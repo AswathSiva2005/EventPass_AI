@@ -34,7 +34,10 @@ export const createEventValidator = [
     .toUpperCase()
     .matches(/^[A-Z0-9][A-Z0-9_-]{2,49}$/)
     .withMessage("Event code is invalid"),
-  body("description").trim().isLength({ min: 10, max: 5000 }),
+  body("description").optional({ values: "falsy" }).trim().isLength({ max: 5000 }),
+  body("eventType").trim().isLength({ min: 2, max: 200 }).withMessage("Event type is required"),
+  body("eventTypeDescription").optional({ values: "falsy" }).trim().isLength({ max: 1000 }),
+  body("teamSize").isInt({ min: 1, max: 100 }).toInt(),
   body("college").isMongoId().withMessage("College is invalid"),
   body("departments")
     .isArray({ min: 1 })
@@ -53,6 +56,15 @@ export const createEventValidator = [
     .optional()
     .isIn(["draft", "published"])
     .withMessage("New events must be draft or published")
+];
+
+export const updateEventValidator = [param("eventId").isMongoId().withMessage("Event ID is invalid"), ...createEventValidator.filter((validator) => validator !== undefined)];
+export const deleteEventValidator = [param("eventId").isMongoId().withMessage("Event ID is invalid")];
+export const eventDeletionRequestValidator = [param("requestId").isMongoId().withMessage("Deletion request ID is invalid")];
+export const deleteEventBodyValidator = [body("password").optional().isString().isLength({ min: 1, max: 128 })];
+export const reviewEventDeletionValidator = [
+  param("requestId").isMongoId().withMessage("Deletion request ID is invalid"),
+  body("decision").isIn(["approve", "reject"]).withMessage("Decision must be approve or reject")
 ];
 
 export const bulkCollegeValidator = [

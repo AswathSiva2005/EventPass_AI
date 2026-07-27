@@ -28,6 +28,9 @@ export interface Event {
   name: string;
   code: string;
   description: string;
+  eventType?: string;
+  eventTypeDescription?: string;
+  teamSize?: number;
   college: College | string | null;
   departments: Department[];
   venue: {

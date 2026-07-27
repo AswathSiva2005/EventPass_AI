@@ -237,6 +237,7 @@ export const RegisterPage = () => {
             <input
               id="rollNumber"
               className={inputClass}
+              placeholder="As printed on your college ID"
               autoCapitalize="characters"
               {...register("rollNumber", { required: "Roll number is required", minLength: { value: 2, message: "Roll number is too short" } })}
             />
@@ -281,7 +282,7 @@ export const RegisterPage = () => {
             <label className={labelClass} htmlFor="year">Year of study</label>
             <select id="year" className={inputClass} {...register("year", { required: "Choose your year" })}>
               <option value="">Select year</option>
-              {Array.from({ length: 8 }, (_, index) => (
+              {Array.from({ length: 4 }, (_, index) => (
                 <option key={index + 1} value={index + 1}>
                   Year {index + 1}
                 </option>
@@ -330,7 +331,7 @@ export const RegisterPage = () => {
             </div>
             <div>
               <label className={labelClass} htmlFor="emergencyRelationship">Relationship</label>
-              <input id="emergencyRelationship" className={inputClass} {...register("emergencyRelationship", { required: "Relationship is required" })} />
+              <input id="emergencyRelationship" placeholder="e.g. Parent, sibling, guardian" className={inputClass} {...register("emergencyRelationship", { required: "Relationship is required" })} />
               {fieldError("emergencyRelationship")}
             </div>
             <div>

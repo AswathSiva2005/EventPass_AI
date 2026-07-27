@@ -23,7 +23,7 @@ export interface Registration {
   event: RefItem | null; college: RefItem | null; department: RefItem | null;
 }
 export interface AdminEvent {
-  _id: string; name: string; code: string; status: string; startsAt: string; endsAt: string;
-  capacity: number; registrationCount: number; college: RefItem | null;
+  _id: string; name: string; code: string; description: string; eventType?: string; eventTypeDescription?: string; teamSize?: number; status: string; startsAt: string; endsAt: string; registrationOpensAt: string; registrationClosesAt: string;
+  capacity: number; registrationCount: number; college: RefItem | null; departments: RefItem[];
   venue: { name: string; address: string };
 }

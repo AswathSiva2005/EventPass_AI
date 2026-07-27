@@ -4,6 +4,8 @@ import { AdminModel, type AdminRole } from "../models/admin.model.js";
 import { CollegeModel } from "../models/college.model.js";
 import { DepartmentModel } from "../models/department.model.js";
 import { EventModel, type EventStatus } from "../models/event.model.js";
+import { EventDeletionRequestModel } from "../models/event-deletion-request.model.js";
+import { AttendanceModel } from "../models/attendance.model.js";
 import { NotificationModel } from "../models/notification.model.js";
 import {
   StudentModel,
@@ -12,7 +14,7 @@ import {
   type VerificationStatus
 } from "../models/student.model.js";
 import { AppError } from "../utils/app-error.js";
-import { hashPassword } from "./password.service.js";
+import { hashPassword, verifyPassword } from "./password.service.js";
 
 export interface RegistrationFilters {
   search?: string;
@@ -271,7 +273,10 @@ export const reviewRegistration = async (input: {
 export interface CreateEventInput {
   name: string;
   code: string;
-  description: string;
+  description?: string;
+  eventType: string;
+  eventTypeDescription?: string;
+  teamSize: number;
   college: string;
   departments: string[];
   venue: {
@@ -307,7 +312,7 @@ export const createEvent = async (
   }
 
   try {
-    const event = await EventModel.create({ ...input, createdBy: adminId });
+    const event = await EventModel.create({ ...input, description: input.description ?? input.eventTypeDescription ?? input.eventType, createdBy: adminId });
     await AuditLogModel.create({
       actor: adminId,
       actorType: "Admin",
@@ -331,12 +336,88 @@ export const createEvent = async (
 export const listAdminEvents = async () =>
   EventModel.find()
     .select(
-      "name code college departments venue startsAt endsAt registrationOpensAt registrationClosesAt capacity registrationCount status createdAt"
+      "name code description eventType eventTypeDescription teamSize college departments venue startsAt endsAt registrationOpensAt registrationClosesAt capacity registrationCount status createdAt"
     )
     .populate("college", "name code")
     .populate("departments", "name code")
     .sort({ startsAt: -1 })
     .lean();
+
+export const updateEvent = async (
+  eventId: string,
+  input: CreateEventInput,
+  adminId: string,
+  context: { ipAddress?: string; userAgent?: string }
+) => {
+  const [college, departmentCount] = await Promise.all([
+    CollegeModel.findOne({ _id: input.college, isActive: true }).select("_id").lean(),
+    DepartmentModel.countDocuments({ _id: { $in: input.departments }, college: input.college, isActive: true })
+  ]);
+  if (!college) throw new AppError("College is invalid or inactive", 422, "INVALID_COLLEGE");
+  if (departmentCount !== input.departments.length) {
+    throw new AppError("One or more departments are invalid", 422, "INVALID_DEPARTMENTS");
+  }
+
+  const event = await EventModel.findById(eventId);
+  if (!event) throw new AppError("Event was not found", 404, "EVENT_NOT_FOUND");
+  Object.assign(event, { ...input, description: input.description ?? input.eventTypeDescription ?? input.eventType, createdBy: event.createdBy });
+  try {
+    await event.save();
+  } catch (error) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === 11000) {
+      throw new AppError("Event code already exists", 409, "DUPLICATE_EVENT_CODE");
+    }
+    throw error;
+  }
+  await AuditLogModel.create({ actor: adminId, actorType: "Admin", action: "event.updated", entityType: "Event", entityId: event._id, event: event._id, outcome: "success", ...(context.ipAddress ? { ipAddress: context.ipAddress } : {}), ...(context.userAgent ? { userAgent: context.userAgent } : {}) });
+  return event;
+};
+
+export const deleteEvent = async (eventId: string, adminId: string, password: string | undefined, context: { ipAddress?: string; userAgent?: string }) => {
+  const event = await EventModel.findById(eventId).select("_id registrationCount");
+  if (!event) throw new AppError("Event was not found", 404, "EVENT_NOT_FOUND");
+  if (event.registrationCount > 0) {
+    if (!password) throw new AppError("Admin password is required to request deletion", 428, "ADMIN_PASSWORD_REQUIRED");
+    const admin = await AdminModel.findById(adminId).select("+passwordHash").lean();
+    if (!admin?.passwordHash || !(await verifyPassword(password, admin.passwordHash))) {
+      throw new AppError("Admin password is incorrect", 401, "INVALID_ADMIN_PASSWORD");
+    }
+    const pending = await EventDeletionRequestModel.findOne({ event: eventId, status: "pending" }).lean();
+    if (pending) throw new AppError("Deletion approval is already pending", 409, "DELETION_APPROVAL_PENDING");
+    const request = await EventDeletionRequestModel.create({ event: eventId, requestedBy: adminId });
+    await AuditLogModel.create({ actor: adminId, actorType: "Admin", action: "event.deletion_requested", entityType: "Event", entityId: event._id, event: event._id, outcome: "success", ...(context.ipAddress ? { ipAddress: context.ipAddress } : {}), ...(context.userAgent ? { userAgent: context.userAgent } : {}) });
+    return { deleted: false, approvalRequired: true, requestId: request._id.toString() };
+  }
+  await EventModel.deleteOne({ _id: eventId });
+  await EventDeletionRequestModel.deleteMany({ event: eventId });
+  await AuditLogModel.create({ actor: adminId, actorType: "Admin", action: "event.deleted", entityType: "Event", entityId: event._id, event: event._id, outcome: "success", ...(context.ipAddress ? { ipAddress: context.ipAddress } : {}), ...(context.userAgent ? { userAgent: context.userAgent } : {}) });
+  return { deleted: true, approvalRequired: false };
+};
+
+export const listEventDeletionRequests = async () => EventDeletionRequestModel.find({ status: "pending" })
+  .populate("event", "name code registrationCount")
+  .populate("requestedBy", "name email")
+  .sort({ createdAt: 1 })
+  .lean();
+
+export const reviewEventDeletionRequest = async (requestId: string, reviewerId: string, approved: boolean, context: { ipAddress?: string; userAgent?: string }) => {
+  const request = await EventDeletionRequestModel.findOne({ _id: requestId, status: "pending" });
+  if (!request) throw new AppError("Deletion request was not found or already reviewed", 404, "DELETION_REQUEST_NOT_FOUND");
+  request.status = approved ? "approved" : "rejected";
+  request.reviewedBy = new Types.ObjectId(reviewerId);
+  request.reviewedAt = new Date();
+  await request.save();
+  if (approved) {
+    await Promise.all([
+      StudentModel.deleteMany({ event: request.event }),
+      AttendanceModel.deleteMany({ event: request.event }),
+      NotificationModel.deleteMany({ event: request.event }),
+      EventModel.deleteOne({ _id: request.event })
+    ]);
+  }
+  await AuditLogModel.create({ actor: reviewerId, actorType: "Admin", action: approved ? "event.deletion_approved" : "event.deletion_rejected", entityType: "Event", entityId: request.event, event: request.event, outcome: "success", changes: { requestId: request._id.toString() }, ...(context.ipAddress ? { ipAddress: context.ipAddress } : {}), ...(context.userAgent ? { userAgent: context.userAgent } : {}) });
+  return { approved, deleted: approved, requestId: request._id.toString() };
+};
 
 export interface BulkCollegeInput {
   name: string;

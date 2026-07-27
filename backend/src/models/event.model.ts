@@ -15,6 +15,9 @@ export interface Event {
   name: string;
   code: string;
   description: string;
+  eventType: string;
+  eventTypeDescription?: string;
+  teamSize: number;
   college: Types.ObjectId;
   departments: Types.ObjectId[];
   venue: EventVenue;
@@ -53,6 +56,9 @@ const eventSchema = new Schema<Event>(
       match: [codePattern, "Event code is invalid"]
     },
     description: normalizedString(5000),
+    eventType: normalizedString(200),
+    eventTypeDescription: normalizedString(1000),
+    teamSize: { type: Number, required: true, min: 1, max: 100 },
     college: { type: Schema.Types.ObjectId, ref: "College", required: true },
     departments: [{ type: Schema.Types.ObjectId, ref: "Department" }],
     venue: { type: venueSchema, required: true },

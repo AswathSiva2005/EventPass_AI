@@ -1,6 +1,8 @@
 import { Router } from "express";
 import {
   createEventController,
+  deleteEventController,
+  eventDeletionRequestsController,
   createSubAdminController,
   bulkCollegesController,
   dashboardController,
@@ -9,7 +11,9 @@ import {
   pdfExportController,
   registrationsController,
   subAdminsController,
-  reviewController
+  reviewController,
+  updateEventController,
+  reviewEventDeletionController
 } from "../controllers/admin.controller.js";
 import {
   authenticate,
@@ -19,6 +23,10 @@ import {
 import { validateRequest } from "../middlewares/validation.middleware.js";
 import {
   createEventValidator,
+  deleteEventValidator,
+  deleteEventBodyValidator,
+  reviewEventDeletionValidator,
+  updateEventValidator,
   createSubAdminValidator,
   bulkCollegeValidator,
   registrationListValidator,
@@ -45,6 +53,10 @@ adminRouter.patch(
 );
 adminRouter.get("/events", eventsController);
 adminRouter.post("/events", createEventValidator, validateRequest, createEventController);
+adminRouter.patch("/events/:eventId", updateEventValidator, validateRequest, updateEventController);
+adminRouter.delete("/events/:eventId", deleteEventValidator, deleteEventBodyValidator, validateRequest, deleteEventController);
+adminRouter.get("/event-deletion-requests", authorize("super_admin"), eventDeletionRequestsController);
+adminRouter.patch("/event-deletion-requests/:requestId", authorize("super_admin"), reviewEventDeletionValidator, validateRequest, reviewEventDeletionController);
 adminRouter.post("/colleges/bulk", bulkCollegeValidator, validateRequest, bulkCollegesController);
 adminRouter.get(
   "/exports/registrations.xlsx",

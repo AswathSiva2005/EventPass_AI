@@ -6,6 +6,11 @@ export const getRegistrations = async (params: Record<string, string | number>) 
 export const reviewRegistration = async (id: string, status: "approved"|"rejected", notes?: string) => api.patch(`/admin/registrations/${id}/verification`, { status, notes });
 export const getAdminEvents = async () => (await api.get<ApiResponse<AdminEvent[]>>("/admin/events")).data.data;
 export const createEvent = async (payload: unknown) => api.post("/admin/events", payload);
+export const updateEvent = async (id: string, payload: unknown) => api.patch(`/admin/events/${id}`, payload);
+export const deleteEvent = async (id: string, password?: string) => api.delete(`/admin/events/${id}`, password ? { data: { password } } : undefined);
+export interface EventDeletionRequest { _id: string; event: { _id: string; name: string; code: string; registrationCount: number }; requestedBy: { _id: string; name: string; email: string }; createdAt: string; }
+export const getEventDeletionRequests = async () => (await api.get<ApiResponse<EventDeletionRequest[]>>("/admin/event-deletion-requests")).data.data;
+export const reviewEventDeletion = async (id: string, decision: "approve"|"reject") => api.patch(`/admin/event-deletion-requests/${id}`, { decision });
 export const getSubAdmins = async () => (await api.get<ApiResponse<SubAdmin[]>>("/admin/accounts")).data.data;
 export const createSubAdmin = async (payload: {name:string;email:string;password:string;role:"admin"|"event_manager"}) =>
   (await api.post<ApiResponse<SubAdmin>>("/admin/accounts", payload)).data.data;

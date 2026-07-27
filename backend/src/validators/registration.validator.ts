@@ -16,8 +16,8 @@ export const studentRegistrationValidator = [
   body("college").isMongoId().withMessage("College is invalid"),
   body("department").isMongoId().withMessage("Department is invalid"),
   body("year")
-    .isInt({ min: 1, max: 8 })
-    .withMessage("Year must be an integer from 1 to 8")
+    .isInt({ min: 1, max: 4 })
+    .withMessage("Year must be an integer from 1 to 4")
     .toInt(),
   body("phone")
     .customSanitizer(normalizePhone)

@@ -1,10 +1,14 @@
 import type { Request } from "express";
 import {
   createEvent,
+  deleteEvent,
+  listEventDeletionRequests,
   createSubAdmin,
   getDashboardStatistics,
   getRegistrationExportData,
   listAdminEvents,
+  updateEvent,
+  reviewEventDeletionRequest,
   listSubAdmins,
   listRegistrations,
   reviewRegistration,
@@ -121,6 +125,35 @@ export const createEventController = asyncHandler(async (request, response) => {
 export const eventsController = asyncHandler(async (_request, response) => {
   const events = await listAdminEvents();
   sendSuccess(response, { message: "Events retrieved", data: events });
+});
+
+export const updateEventController = asyncHandler(async (request, response) => {
+  const identity = auth(request);
+  const eventId = typeof request.params.eventId === "string" ? request.params.eventId : "";
+  const event = await updateEvent(eventId, request.body as CreateEventInput, identity.userId, context(request));
+  sendSuccess(response, { message: "Event updated", data: event });
+});
+
+export const deleteEventController = asyncHandler(async (request, response) => {
+  const identity = auth(request);
+  const eventId = typeof request.params.eventId === "string" ? request.params.eventId : "";
+  const body = request.body as { password?: unknown };
+  const result = await deleteEvent(eventId, identity.userId, typeof body.password === "string" ? body.password : undefined, context(request));
+  sendSuccess(response, { statusCode: result.approvalRequired ? 202 : 200, message: result.approvalRequired ? "Deletion request submitted for super-admin approval" : "Event deleted", data: result });
+});
+
+export const eventDeletionRequestsController = asyncHandler(async (_request, response) => {
+  const requests = await listEventDeletionRequests();
+  sendSuccess(response, { message: "Event deletion requests retrieved", data: requests });
+});
+
+export const reviewEventDeletionController = asyncHandler(async (request, response) => {
+  const identity = auth(request);
+  const requestId = typeof request.params.requestId === "string" ? request.params.requestId : "";
+  const body = request.body as { decision?: string };
+  const approved = body.decision === "approve";
+  const result = await reviewEventDeletionRequest(requestId, identity.userId, approved, context(request));
+  sendSuccess(response, { message: approved ? "Event deletion approved" : "Event deletion rejected", data: result });
 });
 
 export const bulkCollegesController = asyncHandler(async (request, response) => {
