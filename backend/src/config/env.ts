@@ -40,10 +40,17 @@ if (!["development", "test", "production"].includes(nodeEnv)) {
   throw new Error("NODE_ENV must be development, test, or production");
 }
 
-const corsOrigins = required("CORS_ORIGINS")
+const configuredCorsOrigins = required("CORS_ORIGINS")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+const deployedWebOrigins = [
+  "https://event-pass-ai.vercel.app",
+  "https://event-pass-ai-admin.vercel.app"
+];
+
+const corsOrigins = [...new Set([...configuredCorsOrigins, ...deployedWebOrigins])];
 
 export const env = Object.freeze({
   nodeEnv,
