@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import morgan from "morgan";
 import { env } from "./config/env.js";
+import { getHealth } from "./controllers/health.controller.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { notFound } from "./middlewares/not-found.middleware.js";
 import { apiRouter } from "./routes/index.js";
@@ -41,6 +42,7 @@ export const createApp = (): express.Express => {
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: true, limit: "1mb" }));
   app.use(morgan(env.isProduction ? "combined" : "dev"));
+  app.get("/", getHealth);
   app.use(env.apiPrefix, apiRouter);
   app.use(notFound);
   app.use(errorHandler);

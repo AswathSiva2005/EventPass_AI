@@ -33,7 +33,9 @@ const booleanValue = (name: string, fallback: boolean): boolean => {
   throw new Error(`${name} must be true or false`);
 };
 
-const nodeEnv = (process.env.NODE_ENV ?? "development") as NodeEnvironment;
+const nodeEnv = (
+  process.env.RENDER === "true" ? "production" : (process.env.NODE_ENV ?? "development")
+) as NodeEnvironment;
 if (!["development", "test", "production"].includes(nodeEnv)) {
   throw new Error("NODE_ENV must be development, test, or production");
 }
