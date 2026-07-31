@@ -1,18 +1,19 @@
-import { AlertCircle, ArrowRight, FileCheck2, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowRight, CalendarClock, Clock3, FileCheck2, MapPin, ShieldCheck, Users } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { createRegistration, getColleges, getDepartments } from "../api/student";
 import { Button } from "../components/ui/button";
+import { EventCard } from "../components/ui/event-card";
 import { FileUpload } from "../components/ui/file-upload";
 import { PageHeading } from "../components/ui/page-heading";
 import { useUpcomingEvents } from "../hooks/use-upcoming-events";
 import type { College, Department } from "../types/api";
+import { formatEventDate } from "../utils/format";
 import { getErrorMessage } from "../utils/errors";
 
 interface RegistrationForm {
-  event: string;
   name: string;
   rollNumber: string;
   college: string;
@@ -35,6 +36,7 @@ const labelClass = "text-sm font-bold text-ink-950 dark:text-white";
 export const RegisterPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const eventId = searchParams.get("event") ?? "";
   const { events, isLoading: eventsLoading, error: eventsError } = useUpcomingEvents();
   const [colleges, setColleges] = useState<College[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -47,11 +49,8 @@ export const RegisterPage = () => {
     getValues,
     setValue,
     formState: { errors, isSubmitting }
-  } = useForm<RegistrationForm>({
-    defaultValues: { event: searchParams.get("event") ?? "", consent: false }
-  });
+  } = useForm<RegistrationForm>({ defaultValues: { consent: false } });
   const collegeId = useWatch({ control, name: "college" });
-  const eventId = useWatch({ control, name: "event" });
   const idFrontFile = useWatch({ control, name: "idFront" });
   const idBackFile = useWatch({ control, name: "idBack" });
 
@@ -133,9 +132,10 @@ export const RegisterPage = () => {
   }, [getValues, selectedEvent, selectedEventCollegeId, selectedEventDepartments, setValue]);
 
   const submit = async (values: RegistrationForm) => {
+    if (!selectedEvent) return;
     const payload = new FormData();
     const fields: Array<[string, string]> = [
-      ["event", values.event],
+      ["event", selectedEvent._id],
       ["name", values.name],
       ["rollNumber", values.rollNumber],
       ["college", values.college],
@@ -179,6 +179,45 @@ export const RegisterPage = () => {
   const collegeLocked = Boolean(selectedEventCollegeId);
   const departmentLocked = selectedEventDepartments.length === 1;
 
+  if (eventsLoading) {
+    return (
+      <section className="page-shell min-h-[60vh] py-16 sm:py-24">
+        <PageHeading eyebrow="Student registration" title="Loading event…" description="Fetching event details." />
+      </section>
+    );
+  }
+
+  if (!selectedEvent) {
+    return (
+      <section className="page-shell min-h-[60vh] py-16 sm:py-24">
+        <PageHeading
+          eyebrow="Student registration"
+          title="Choose an event to register"
+          description="Pick an upcoming event below to see its full details and start your registration."
+        />
+        {eventsError && (
+          <div className="mx-auto mt-10 flex max-w-3xl gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-400/20 dark:bg-amber-400/8 dark:text-amber-200">
+            <AlertCircle className="shrink-0" size={19} />
+            {eventsError}
+          </div>
+        )}
+        {!eventsError && events.length === 0 && (
+          <div className="mx-auto mt-10 flex max-w-3xl gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-400/20 dark:bg-amber-400/8 dark:text-amber-200">
+            <AlertCircle className="shrink-0" size={19} />
+            Registration cannot begin because no upcoming event is currently open.
+          </div>
+        )}
+        {events.length > 0 && (
+          <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {events.map((event, index) => <EventCard key={event._id} event={event} index={index} />)}
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  const seatsLeft = Math.max(selectedEvent.capacity - (selectedEvent.registrationCount ?? 0), 0);
+
   return (
     <section className="page-shell py-16 sm:py-24">
       <PageHeading
@@ -186,13 +225,50 @@ export const RegisterPage = () => {
         title="Create your verified event pass"
         description="Complete the form using accurate college details. Your documents are reviewed before the pass is approved."
       />
-      {(eventsError || (!eventsLoading && events.length === 0)) && (
-        <div className="mx-auto mt-10 flex max-w-3xl gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-400/20 dark:bg-amber-400/8 dark:text-amber-200">
-          <AlertCircle className="shrink-0" size={19} />
-          {eventsError ?? "Registration cannot begin because no upcoming event is currently open."}
+
+      <div className="surface mx-auto mt-10 max-w-4xl overflow-hidden rounded-[2rem]">
+        {selectedEvent.banner?.url && (
+          <img src={selectedEvent.banner.url} alt={selectedEvent.name} className="h-52 w-full object-cover sm:h-72" />
+        )}
+        <div className="p-5 sm:p-8">
+          <p className="text-xs font-bold tracking-wider text-emerald-700 uppercase dark:text-mint-300">{selectedEvent.code}</p>
+          <h2 className="mt-1 font-display text-2xl font-bold tracking-[-0.03em] text-ink-950 dark:text-white">{selectedEvent.name}</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">{selectedEvent.description}</p>
+          <div className="mt-5 grid gap-3 text-sm text-slate-600 sm:grid-cols-2 dark:text-slate-300">
+            <p className="flex items-center gap-2"><Clock3 size={16} />{formatEventDate(selectedEvent.startsAt)}</p>
+            <p className="flex items-center gap-2"><MapPin size={16} />{selectedEvent.venue?.name || "Venue to be announced"}</p>
+            <p className="flex items-center gap-2"><Users size={16} />{seatsLeft} of {selectedEvent.capacity} seats left</p>
+            <p className="flex items-center gap-2"><CalendarClock size={16} />Closes {new Date(selectedEvent.registrationClosesAt).toLocaleString("en-IN")}</p>
+          </div>
+
+          {selectedEvent.highlights && selectedEvent.highlights.length > 0 && (
+            <div className="mt-8 border-t border-slate-200 pt-6 dark:border-white/10">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="font-display text-lg font-bold">What&apos;s happening</h3>
+                <p className="flex shrink-0 items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <Users size={14} />
+                  Team size: {selectedEvent.teamSize === 1 ? "1 person" : `${selectedEvent.teamSize ?? 1} people`}
+                </p>
+              </div>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {selectedEvent.highlights.map((highlight, index) => (
+                  <div key={highlight._id ?? index} className="flex gap-3 rounded-2xl bg-emerald-50 p-3 dark:bg-mint-300/10">
+                    {highlight.image?.url && (
+                      <img src={highlight.image.url} alt={highlight.title} className="size-16 shrink-0 rounded-xl object-cover" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-bold text-emerald-800 dark:text-mint-300">{highlight.title}</p>
+                      {highlight.description && <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{highlight.description}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      )}
-      <form onSubmit={(event) => void handleSubmit(submit)(event)} className="surface mx-auto mt-10 max-w-4xl rounded-[2rem] p-5 sm:p-8">
+      </div>
+
+      <form onSubmit={(event) => void handleSubmit(submit)(event)} className="surface mx-auto mt-6 max-w-4xl rounded-[2rem] p-5 sm:p-8">
         <div className="flex items-center gap-3 border-b border-slate-200 pb-5 dark:border-white/10">
           <span className="grid size-11 place-items-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-mint-300/10 dark:text-mint-300">
             <FileCheck2 size={21} />
@@ -204,19 +280,6 @@ export const RegisterPage = () => {
         </div>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <label className={labelClass} htmlFor="event">Choose event</label>
-            <select id="event" className={inputClass} disabled={eventsLoading} {...register("event", { required: "Choose an event" })}>
-              <option value="">{eventsLoading ? "Loading events..." : "Select an upcoming event"}</option>
-              {events.map((event) => (
-                <option key={event._id} value={event._id}>
-                  {event.name} - {event.venue?.name || "Venue to be announced"}
-                </option>
-              ))}
-            </select>
-            {fieldError("event")}
-            {selectedEvent && <p className="mt-2 text-xs text-slate-500">Registration closes {new Date(selectedEvent.registrationClosesAt).toLocaleString("en-IN")}.</p>}
-          </div>
           <div>
             <label className={labelClass} htmlFor="name">Full name</label>
             <input
@@ -397,7 +460,7 @@ export const RegisterPage = () => {
           <p className="flex items-center gap-2 text-xs text-slate-500">
             <ShieldCheck size={16} className="text-emerald-600 dark:text-mint-300" /> Documents are sent securely to the verification service.
           </p>
-          <Button type="submit" loading={isSubmitting} disabled={events.length === 0}>
+          <Button type="submit" loading={isSubmitting}>
             Submit registration <ArrowRight size={17} />
           </Button>
         </div>

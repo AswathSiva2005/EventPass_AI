@@ -2,13 +2,19 @@ import mongoose from "mongoose";
 import { connectDatabase, disconnectDatabase } from "../config/database.js";
 import { logger } from "../utils/logger.js";
 
+interface LegacyEvent {
+  _id: mongoose.Types.ObjectId;
+  eventType: string;
+  eventTypeDescription?: string;
+}
+
 // One-off migration: events created before the "highlights" feature stored a
 // single eventType/eventTypeDescription pair. Copy that into highlights[0] so
 // existing events keep showing a "what's happening" entry after deploy.
 const run = async (): Promise<void> => {
   await connectDatabase();
 
-  const collection = mongoose.connection.collection("events");
+  const collection = mongoose.connection.collection<LegacyEvent>("events");
   const legacyEvents = await collection
     .find({ eventType: { $exists: true }, highlights: { $exists: false } })
     .toArray();

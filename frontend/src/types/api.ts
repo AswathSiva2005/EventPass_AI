@@ -53,6 +53,7 @@ export interface Event {
   endsAt: string;
   registrationClosesAt: string;
   capacity: number;
+  registrationCount?: number;
   status: "published" | "ongoing" | "completed" | "cancelled";
 }
 
