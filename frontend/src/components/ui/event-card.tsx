@@ -44,13 +44,7 @@ export const EventCard = ({ event, index = 0 }: { event: Event; index?: number }
         </p>
         {highlights.length > 0 && (
           <div className="mt-4">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-bold tracking-wide text-emerald-700 uppercase dark:text-mint-300">What&apos;s happening</p>
-              <p className="flex shrink-0 items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                <Users size={13} />
-                {event.teamSize === 1 ? "1 person" : `${event.teamSize ?? 1} people`}
-              </p>
-            </div>
+            <p className="text-xs font-bold tracking-wide text-emerald-700 uppercase dark:text-mint-300">What&apos;s happening</p>
             <div className="mt-2 grid gap-2">
               {highlights.slice(0, 3).map((highlight, highlightIndex) => (
                 <div
@@ -64,12 +58,16 @@ export const EventCard = ({ event, index = 0 }: { event: Event; index?: number }
                       className="size-10 shrink-0 rounded-lg object-cover"
                     />
                   )}
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-bold text-emerald-800 dark:text-mint-300">{highlight.title}</p>
                     {highlight.description && (
                       <p className="truncate text-[11px] text-slate-600 dark:text-slate-300">{highlight.description}</p>
                     )}
                   </div>
+                  <p className="flex shrink-0 items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    <Users size={12} />
+                    {highlight.teamSize === 1 ? "1 person" : `${highlight.teamSize ?? 1} people`}
+                  </p>
                 </div>
               ))}
               {highlights.length > 3 && (

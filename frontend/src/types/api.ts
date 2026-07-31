@@ -33,6 +33,7 @@ export interface EventHighlight {
   title: string;
   description?: string;
   image?: MediaAsset;
+  teamSize?: number;
 }
 
 export interface Event {
@@ -42,7 +43,6 @@ export interface Event {
   description: string;
   banner?: MediaAsset;
   highlights?: EventHighlight[];
-  teamSize?: number;
   college: College | string | null;
   departments: Department[];
   venue: {

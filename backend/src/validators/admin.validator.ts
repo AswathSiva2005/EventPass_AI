@@ -44,7 +44,7 @@ export const createEventValidator = [
   body("highlights.*.image").optional({ values: "falsy" }),
   body("highlights.*.image.url").optional({ values: "falsy" }).isURL().withMessage("Highlight image URL is invalid"),
   body("highlights.*.image.publicId").optional({ values: "falsy" }).isString().isLength({ max: 255 }),
-  body("teamSize").isInt({ min: 1, max: 100 }).toInt(),
+  body("highlights.*.teamSize").isInt({ min: 1, max: 100 }).withMessage("Team size must be 1 to 100").toInt(),
   body("college").isMongoId().withMessage("College is invalid"),
   body("departments")
     .isArray({ min: 1 })

@@ -16,6 +16,7 @@ export interface EventHighlight {
   title: string;
   description?: string;
   image?: MediaAsset;
+  teamSize: number;
 }
 
 export interface Event {
@@ -24,7 +25,6 @@ export interface Event {
   description: string;
   banner?: MediaAsset;
   highlights: EventHighlight[];
-  teamSize: number;
   college: Types.ObjectId;
   departments: Types.ObjectId[];
   venue: EventVenue;
@@ -53,7 +53,8 @@ const venueSchema = new Schema<EventVenue>(
 const eventHighlightSchema = new Schema<EventHighlight>({
   title: normalizedString(200),
   description: normalizedString(1000, { required: false }),
-  image: { type: mediaAssetSchema, required: false }
+  image: { type: mediaAssetSchema, required: false },
+  teamSize: { type: Number, required: true, min: 1, max: 100 }
 });
 
 const eventSchema = new Schema<Event>(
@@ -71,7 +72,6 @@ const eventSchema = new Schema<Event>(
     description: normalizedString(5000),
     banner: { type: mediaAssetSchema, required: false },
     highlights: { type: [eventHighlightSchema], default: [] },
-    teamSize: { type: Number, required: true, min: 1, max: 100 },
     college: { type: Schema.Types.ObjectId, ref: "College", required: true },
     departments: [{ type: Schema.Types.ObjectId, ref: "Department" }],
     venue: { type: venueSchema, required: true },

@@ -13,7 +13,7 @@ export const listEventsController = asyncHandler(async (request, response) => {
       : {})
     })
     .select(
-      "name code description banner highlights teamSize college departments venue startsAt endsAt registrationClosesAt capacity registrationCount status"
+      "name code description banner highlights college departments venue startsAt endsAt registrationClosesAt capacity registrationCount status"
     )
     .populate("college", "name code")
     .populate("departments", "name code college")

@@ -274,6 +274,7 @@ export interface EventHighlightInput {
   title: string;
   description?: string;
   image?: { url: string; publicId: string };
+  teamSize: number;
 }
 
 export interface CreateEventInput {
@@ -282,7 +283,6 @@ export interface CreateEventInput {
   description?: string;
   banner?: { url: string; publicId: string };
   highlights: EventHighlightInput[];
-  teamSize: number;
   college: string;
   departments: string[];
   venue: {
@@ -346,7 +346,7 @@ export const createEvent = async (
 export const listAdminEvents = async () =>
   EventModel.find()
     .select(
-      "name code description banner highlights teamSize college departments venue startsAt endsAt registrationOpensAt registrationClosesAt capacity registrationCount status createdAt"
+      "name code description banner highlights college departments venue startsAt endsAt registrationOpensAt registrationClosesAt capacity registrationCount status createdAt"
     )
     .populate("college", "name code")
     .populate("departments", "name code")

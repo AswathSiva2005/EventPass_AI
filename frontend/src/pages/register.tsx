@@ -260,13 +260,7 @@ export const RegisterPage = () => {
 
           {selectedEventHighlights.length > 0 && (
             <div className="mt-8 border-t border-slate-200 pt-6 dark:border-white/10">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-display text-lg font-bold">What&apos;s happening</h3>
-                <p className="flex shrink-0 items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  <Users size={14} />
-                  Team size: {selectedEvent.teamSize === 1 ? "1 person" : `${selectedEvent.teamSize ?? 1} people`}
-                </p>
-              </div>
+              <h3 className="font-display text-lg font-bold">What&apos;s happening</h3>
               {selectedEventHighlights.length > 1 && (
                 <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   Choose the one activity you want to register for.
@@ -310,6 +304,10 @@ export const RegisterPage = () => {
                           )}
                         </div>
                         {highlight.description && <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{highlight.description}</p>}
+                        <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                          <Users size={13} />
+                          Team size: {highlight.teamSize === 1 ? "1 person" : `${highlight.teamSize ?? 1} people`}
+                        </p>
                       </div>
                     </button>
                   );
