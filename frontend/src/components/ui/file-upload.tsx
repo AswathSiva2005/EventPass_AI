@@ -70,38 +70,6 @@ const analyzeLuma = (data: Uint8ClampedArray) => {
   return { mean, variance };
 };
 
-const analyzeRegionTexture = (data: Uint8ClampedArray, width: number, height: number, left: number, top: number, right: number, bottom: number) => {
-  let edgePixels = 0;
-  let graySum = 0;
-  let graySumSquares = 0;
-  let sampleCount = 0;
-
-  for (let y = Math.max(1, top); y < Math.min(height, bottom + 1); y += 1) {
-    for (let x = Math.max(1, left); x < Math.min(width, right + 1); x += 1) {
-      const pixel = (y * width + x) * 4;
-      const gray = data[pixel]! * 0.299 + data[pixel + 1]! * 0.587 + data[pixel + 2]! * 0.114;
-      const leftGray = data[pixel - 4]! * 0.299 + data[pixel - 3]! * 0.587 + data[pixel - 2]! * 0.114;
-      const topPixel = ((y - 1) * width + x) * 4;
-      const topGray = data[topPixel]! * 0.299 + data[topPixel + 1]! * 0.587 + data[topPixel + 2]! * 0.114;
-
-      graySum += gray;
-      graySumSquares += gray * gray;
-      sampleCount += 1;
-
-      const delta = Math.abs(gray - leftGray) + Math.abs(gray - topGray);
-      if (delta > 40) {
-        edgePixels += 1;
-      }
-    }
-  }
-
-  const mean = graySum / Math.max(1, sampleCount);
-  const variance = graySumSquares / Math.max(1, sampleCount) - mean * mean;
-  const edgeDensity = edgePixels / Math.max(1, sampleCount);
-
-  return { mean, variance, edgeDensity, sampleCount };
-};
-
 const analyzeDocumentLikeImage = (data: Uint8ClampedArray, width: number, height: number) => {
   const grayscale = new Float32Array(width * height);
   let sum = 0;
@@ -312,61 +280,34 @@ const analyzeSelfieLikeImage = (data: Uint8ClampedArray, width: number, height: 
   const faceRatio = faceWidth / faceHeight;
   const widthRatio = faceWidth / width;
   const heightRatio = faceHeight / height;
-  const leftMargin = skinLeft / width;
-  const rightMargin = (width - skinRight - 1) / width;
   const centerCoverage = centerSkinCount / skinCount;
   const centerOffset = Math.abs((skinLeft + skinRight) / 2 / width - 0.5);
-  const horizontalGap = Math.min(leftMargin, rightMargin);
-  const horizontalImbalance = Math.abs(leftMargin - rightMargin);
-  const skinCoverage = skinCount / (faceWidth * faceHeight);
-  const faceTexture = analyzeRegionTexture(data, width, height, skinLeft, skinTop, skinRight, skinBottom);
 
-  if (skinCount < width * height * 0.01) {
+  if (skinCount < width * height * 0.004) {
     return {
       ok: false,
-      message: "The selfie is too empty. Move closer so your face fills the frame."
+      message: "No face was detected. Move closer so your face is clearly visible."
     };
   }
 
-  if (faceRatio < 0.55 || faceRatio > 1.45) {
+  if (faceRatio < 0.4 || faceRatio > 1.9) {
     return {
       ok: false,
-      message: "The image does not look like a centered face. Turn toward the camera and try again."
+      message: "The image does not look like a face. Face the camera and try again."
     };
   }
 
-  if (widthRatio < 0.18 || heightRatio < 0.22) {
+  if (widthRatio < 0.1 || heightRatio < 0.12) {
     return {
       ok: false,
-      message: "Move closer so the face is clear enough for verification."
+      message: "Move closer so your face is clear enough for verification."
     };
   }
 
-  if (widthRatio > 0.72 || heightRatio > 0.88) {
-    return {
-      ok: false,
-      message: "Step back slightly so the full face and both sides stay in frame."
-    };
-  }
-
-  if (horizontalGap < 0.035 && horizontalImbalance > 0.12) {
-    return {
-      ok: false,
-      message: "Reframe the selfie so the face is centered with visible space on both sides."
-    };
-  }
-
-  if (centerOffset > 0.18 || centerCoverage < 0.5) {
+  if (centerOffset > 0.3 || centerCoverage < 0.32) {
     return {
       ok: false,
       message: "Center your face in the camera before capturing."
-    };
-  }
-
-  if (skinCoverage > 0.9 && faceTexture.edgeDensity < 0.018) {
-    return {
-      ok: false,
-      message: "Keep your face visible and avoid covering it with your hand."
     };
   }
 
@@ -379,11 +320,11 @@ const verifySelfie = async (file: File): Promise<VerificationOutcome> => {
   const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
   const { mean, variance } = analyzeLuma(data);
 
-  if (mean < 45 || mean > 235) {
+  if (mean < 25 || mean > 245) {
     return { ok: false, message: "The selfie is too dark or too bright. Try again in even lighting." };
   }
 
-  if (variance < 900) {
+  if (variance < 400) {
     return { ok: false, message: "The selfie is too flat or blurry. Keep the camera steady and try again." };
   }
 

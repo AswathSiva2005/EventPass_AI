@@ -414,9 +414,12 @@ export const RegisterPage = () => {
               type="tel"
               autoComplete="tel"
               placeholder="9876543210"
+              maxLength={10}
               {...register("phone", {
                 required: "Phone number is required",
-                pattern: { value: /^\+?[1-9]\d{7,14}$/, message: "Use a valid international phone number" }
+                minLength: { value: 10, message: "Phone number must be 10 digits" },
+                maxLength: { value: 10, message: "Phone number must be 10 digits" },
+                pattern: { value: /^\d{10}$/, message: "Enter a valid 10-digit phone number" }
               })}
             />
             {fieldError("phone")}
@@ -457,9 +460,12 @@ export const RegisterPage = () => {
                 className={inputClass}
                 type="tel"
                 placeholder="9876543210"
+                maxLength={10}
                 {...register("emergencyPhone", {
                   required: "Contact phone is required",
-                  pattern: { value: /^\+?[1-9]\d{7,14}$/, message: "Enter a valid phone" }
+                  minLength: { value: 10, message: "Phone number must be 10 digits" },
+                  maxLength: { value: 10, message: "Phone number must be 10 digits" },
+                  pattern: { value: /^\d{10}$/, message: "Enter a valid 10-digit phone number" }
                 })}
               />
               {fieldError("emergencyPhone")}
@@ -485,7 +491,6 @@ export const RegisterPage = () => {
               kind="id-card"
               label="College ID - front"
               hint="Include all four corners and keep the card flat."
-              capture="environment"
               error={errors.idFront?.message}
               validateSelection={(file) => ensureDistinctIdCard(file, idBackFile)}
               onFile={(file) => setValue("idFront", file, { shouldValidate: true })}
@@ -494,7 +499,6 @@ export const RegisterPage = () => {
               kind="id-card"
               label="College ID - back"
               hint="Keep text sharp and make sure the card fills the frame."
-              capture="environment"
               error={errors.idBack?.message}
               validateSelection={(file) => ensureDistinctIdCard(file, idFrontFile)}
               onFile={(file) => setValue("idBack", file, { shouldValidate: true })}
