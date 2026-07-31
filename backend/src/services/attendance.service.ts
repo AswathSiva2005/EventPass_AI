@@ -139,7 +139,7 @@ export const getVolunteerAttendanceExportRows = async (volunteerId: string, even
   }
 
   const students = await StudentModel.find({ _id: { $in: records.map((record) => record.student) } })
-    .select("registrationId name rollNumber email phone year verificationStatus attendanceStatus entryTime exitTime createdAt event college department")
+    .select("registrationId name rollNumber email phone year verificationStatus attendanceStatus entryTime exitTime createdAt event college department highlight")
     .populate("event", "name code")
     .populate("college", "name code")
     .populate("department", "name code")

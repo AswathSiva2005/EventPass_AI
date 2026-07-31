@@ -20,6 +20,11 @@ export interface EmergencyContact {
   phone: string;
 }
 
+export interface StudentHighlight {
+  id: Types.ObjectId;
+  title: string;
+}
+
 export interface Student {
   registrationId: string;
   event: Types.ObjectId;
@@ -31,6 +36,7 @@ export interface Student {
   phone: string;
   email: string;
   emergencyContact: EmergencyContact;
+  highlight?: StudentHighlight;
   selfie: MediaAsset;
   idFront: MediaAsset;
   idBack: MediaAsset;
@@ -59,6 +65,14 @@ const emergencyContactSchema = new Schema<EmergencyContact>(
       trim: true,
       match: [phonePattern, "Emergency contact phone must be in international format"]
     }
+  },
+  { _id: false }
+);
+
+const studentHighlightSchema = new Schema<StudentHighlight>(
+  {
+    id: { type: Schema.Types.ObjectId, required: true },
+    title: normalizedString(200)
   },
   { _id: false }
 );
@@ -103,6 +117,7 @@ const studentSchema = new Schema<Student>(
       match: [emailPattern, "Email address is invalid"]
     },
     emergencyContact: { type: emergencyContactSchema, required: true },
+    highlight: { type: studentHighlightSchema, required: false },
     selfie: { type: mediaAssetSchema, required: true },
     idFront: { type: mediaAssetSchema, required: true },
     idBack: { type: mediaAssetSchema, required: true },

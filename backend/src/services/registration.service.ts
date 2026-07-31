@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 import bwipjs from "bwip-js";
 import QRCode from "qrcode";
-import type { FilterQuery } from "mongoose";
+import type { FilterQuery, Types } from "mongoose";
 import { env } from "../config/env.js";
 import { CollegeModel } from "../models/college.model.js";
 import { DepartmentModel } from "../models/department.model.js";
@@ -25,6 +25,7 @@ export interface RegistrationInput {
   rollNumber: string;
   college: string;
   department: string;
+  highlight?: string;
   year: number;
   phone: string;
   email: string;
@@ -116,6 +117,20 @@ export const registerStudent = async (
     );
   }
 
+  let highlight: { id: Types.ObjectId; title: string } | undefined;
+  if (event.highlights && event.highlights.length > 0) {
+    if (event.highlights.length === 1) {
+      const only = event.highlights[0];
+      if (only) highlight = { id: only._id, title: only.title };
+    } else {
+      const match = event.highlights.find((item) => item._id.toString() === input.highlight);
+      if (!match) {
+        throw new AppError("Choose which activity you're registering for", 422, "HIGHLIGHT_REQUIRED");
+      }
+      highlight = { id: match._id, title: match.title };
+    }
+  }
+
   const reserved = await EventModel.updateOne(
     {
       _id: event._id,
@@ -193,6 +208,7 @@ export const registerStudent = async (
       phone: input.phone,
       email: input.email,
       emergencyContact: input.emergencyContact,
+      ...(highlight ? { highlight } : {}),
       selfie,
       idFront,
       idBack,

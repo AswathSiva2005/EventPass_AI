@@ -15,6 +15,7 @@ export const studentRegistrationValidator = [
     .withMessage("Roll number must be 2 to 50 characters"),
   body("college").isMongoId().withMessage("College is invalid"),
   body("department").isMongoId().withMessage("Department is invalid"),
+  body("highlight").optional({ values: "falsy" }).isMongoId().withMessage("Selected activity is invalid"),
   body("year")
     .isInt({ min: 1, max: 4 })
     .withMessage("Year must be an integer from 1 to 4")

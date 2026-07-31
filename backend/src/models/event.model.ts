@@ -12,6 +12,7 @@ export interface EventVenue {
 }
 
 export interface EventHighlight {
+  _id: Types.ObjectId;
   title: string;
   description?: string;
   image?: MediaAsset;

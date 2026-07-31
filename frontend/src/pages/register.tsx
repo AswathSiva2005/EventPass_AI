@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowRight, CalendarClock, Clock3, FileCheck2, MapPin, ShieldCheck, Users } from "lucide-react";
+import { AlertCircle, ArrowRight, CalendarClock, Check, Clock3, FileCheck2, MapPin, ShieldCheck, Users } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -18,6 +18,7 @@ interface RegistrationForm {
   rollNumber: string;
   college: string;
   department: string;
+  highlight?: string;
   year: string;
   phone: string;
   email: string;
@@ -53,6 +54,7 @@ export const RegisterPage = () => {
   const collegeId = useWatch({ control, name: "college" });
   const idFrontFile = useWatch({ control, name: "idFront" });
   const idBackFile = useWatch({ control, name: "idBack" });
+  const selectedHighlight = useWatch({ control, name: "highlight" });
 
   useEffect(() => {
     register("selfie", { validate: (file) => file instanceof File || "A clear selfie is required" });
@@ -82,6 +84,20 @@ export const RegisterPage = () => {
         ? selectedEvent.college
         : "";
   const selectedEventDepartments = useMemo(() => selectedEvent?.departments ?? [], [selectedEvent]);
+  const selectedEventHighlights = useMemo(() => selectedEvent?.highlights ?? [], [selectedEvent]);
+
+  useEffect(() => {
+    register("highlight", {
+      validate: (value) =>
+        selectedEventHighlights.length <= 1 || Boolean(value) || "Choose which activity you're registering for"
+    });
+  }, [register, selectedEventHighlights]);
+
+  useEffect(() => {
+    if (selectedEventHighlights.length !== 1) return;
+    const only = selectedEventHighlights[0];
+    if (only?._id) setValue("highlight", only._id, { shouldDirty: false, shouldValidate: true });
+  }, [selectedEventHighlights, setValue]);
 
   const fingerprintFile = async (file: File) => {
     const cached = fileHashCache.current.get(file);
@@ -148,6 +164,7 @@ export const RegisterPage = () => {
       ["emergencyContact[phone]", values.emergencyPhone]
     ];
     fields.forEach(([key, value]) => payload.append(key, value));
+    if (values.highlight) payload.append("highlight", values.highlight);
     if (values.selfie) payload.append("selfie", values.selfie);
     if (values.idFront) payload.append("idFront", values.idFront);
     if (values.idBack) payload.append("idBack", values.idBack);
@@ -241,7 +258,7 @@ export const RegisterPage = () => {
             <p className="flex items-center gap-2"><CalendarClock size={16} />Closes {new Date(selectedEvent.registrationClosesAt).toLocaleString("en-IN")}</p>
           </div>
 
-          {selectedEvent.highlights && selectedEvent.highlights.length > 0 && (
+          {selectedEventHighlights.length > 0 && (
             <div className="mt-8 border-t border-slate-200 pt-6 dark:border-white/10">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="font-display text-lg font-bold">What&apos;s happening</h3>
@@ -250,19 +267,57 @@ export const RegisterPage = () => {
                   Team size: {selectedEvent.teamSize === 1 ? "1 person" : `${selectedEvent.teamSize ?? 1} people`}
                 </p>
               </div>
+              {selectedEventHighlights.length > 1 && (
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  Choose the one activity you want to register for.
+                </p>
+              )}
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                {selectedEvent.highlights.map((highlight, index) => (
-                  <div key={highlight._id ?? index} className="flex gap-3 rounded-2xl bg-emerald-50 p-3 dark:bg-mint-300/10">
-                    {highlight.image?.url && (
-                      <img src={highlight.image.url} alt={highlight.title} className="size-16 shrink-0 rounded-xl object-cover" />
-                    )}
-                    <div className="min-w-0">
-                      <p className="font-bold text-emerald-800 dark:text-mint-300">{highlight.title}</p>
-                      {highlight.description && <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{highlight.description}</p>}
-                    </div>
-                  </div>
-                ))}
+                {selectedEventHighlights.map((highlight, index) => {
+                  const id = highlight._id ?? String(index);
+                  const isSelectable = selectedEventHighlights.length > 1;
+                  const isSelected = isSelectable && selectedHighlight === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      disabled={!isSelectable}
+                      onClick={() => setValue("highlight", id, { shouldValidate: true })}
+                      className={`flex gap-3 rounded-2xl p-3 text-left transition ${
+                        isSelectable ? "cursor-pointer" : "cursor-default"
+                      } ${
+                        isSelected
+                          ? "bg-emerald-100 ring-2 ring-emerald-600 dark:bg-mint-300/20 dark:ring-mint-300"
+                          : "bg-emerald-50 dark:bg-mint-300/10"
+                      }`}
+                    >
+                      {highlight.image?.url && (
+                        <img src={highlight.image.url} alt={highlight.title} className="size-16 shrink-0 rounded-xl object-cover" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-bold text-emerald-800 dark:text-mint-300">{highlight.title}</p>
+                          {isSelectable && (
+                            <span
+                              className={`grid size-5 shrink-0 place-items-center rounded-full border-2 ${
+                                isSelected
+                                  ? "border-emerald-600 bg-emerald-600 dark:border-mint-300 dark:bg-mint-300"
+                                  : "border-slate-300 dark:border-white/20"
+                              }`}
+                            >
+                              {isSelected && <Check size={12} className="text-white dark:text-ink-950" />}
+                            </span>
+                          )}
+                        </div>
+                        {highlight.description && <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{highlight.description}</p>}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
+              {errors.highlight?.message && (
+                <p className="mt-3 text-xs font-semibold text-rose-600 dark:text-rose-300">{errors.highlight.message}</p>
+              )}
             </div>
           )}
         </div>

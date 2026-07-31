@@ -208,7 +208,7 @@ export const listRegistrations = async (
   const [items, total] = await Promise.all([
     StudentModel.find(query)
       .select(
-        "registrationId name rollNumber email phone year verificationStatus attendanceStatus createdAt selfie idFront idBack qrCode event college department"
+        "registrationId name rollNumber email phone year verificationStatus attendanceStatus createdAt selfie idFront idBack qrCode event college department highlight"
       )
       .populate("event", "name code startsAt venue")
       .populate("college", "name code")
@@ -477,7 +477,7 @@ export const upsertColleges = async (inputs: BulkCollegeInput[]) => {
 export const getRegistrationExportData = async (filters: RegistrationFilters) =>
   StudentModel.find(buildRegistrationFilter(filters))
     .select(
-      "registrationId name rollNumber email phone year verificationStatus attendanceStatus entryTime exitTime createdAt event college department"
+      "registrationId name rollNumber email phone year verificationStatus attendanceStatus entryTime exitTime createdAt event college department highlight"
     )
     .populate("event", "name code")
     .populate("college", "name code")

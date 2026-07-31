@@ -21,6 +21,7 @@ interface RegistrationBody {
   rollNumber: string;
   college: string;
   department: string;
+  highlight?: string;
   year: number;
   phone: string;
   email: string;
@@ -56,6 +57,7 @@ export const registerStudentController = asyncHandler(async (request, response) 
     rollNumber: body.rollNumber,
     college: body.college,
     department: body.department,
+    ...(body.highlight ? { highlight: body.highlight } : {}),
     year: body.year,
     phone: body.phone,
     email: body.email,

@@ -21,6 +21,7 @@ export interface Registration {
   attendanceStatus: "registered"|"checked_in"|"checked_out"|"absent"; createdAt: string;
   selfie: { url: string }; idFront: { url: string }; idBack: { url: string };
   event: RefItem | null; college: RefItem | null; department: RefItem | null;
+  highlight?: { title: string } | null;
 }
 export interface MediaAsset { url: string; publicId: string; }
 export interface EventHighlight { _id?: string; title: string; description?: string; image?: MediaAsset; }

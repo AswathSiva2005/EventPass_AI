@@ -17,11 +17,17 @@ interface ExportRow {
   event: unknown;
   college: unknown;
   department: unknown;
+  highlight?: unknown;
 }
 
 const relatedName = (value: unknown): string => {
   if (typeof value !== "object" || value === null || !("name" in value)) return "";
   return typeof value.name === "string" ? value.name : "";
+};
+
+const activityName = (value: unknown): string => {
+  if (typeof value !== "object" || value === null || !("title" in value)) return "";
+  return typeof value.title === "string" ? value.title : "";
 };
 
 export const createExcelExport = async (rows: ExportRow[]): Promise<Buffer> => {
@@ -41,6 +47,7 @@ export const createExcelExport = async (rows: ExportRow[]): Promise<Buffer> => {
     { header: "Department", key: "department", width: 24 },
     { header: "Year", key: "year", width: 10 },
     { header: "Event", key: "event", width: 28 },
+    { header: "Activity", key: "highlight", width: 24 },
     { header: "Verification", key: "verificationStatus", width: 16 },
     { header: "Attendance", key: "attendanceStatus", width: 16 },
     { header: "Entry Time", key: "entryTime", width: 22 },
@@ -52,7 +59,8 @@ export const createExcelExport = async (rows: ExportRow[]): Promise<Buffer> => {
       ...row,
       college: relatedName(row.college),
       department: relatedName(row.department),
-      event: relatedName(row.event)
+      event: relatedName(row.event),
+      highlight: activityName(row.highlight)
     });
   }
   sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
@@ -61,7 +69,7 @@ export const createExcelExport = async (rows: ExportRow[]): Promise<Buffer> => {
     pattern: "solid",
     fgColor: { argb: "FF0C1A2D" }
   };
-  sheet.autoFilter = { from: "A1", to: "N1" };
+  sheet.autoFilter = { from: "A1", to: "O1" };
   const output = await workbook.xlsx.writeBuffer();
   return Buffer.from(output);
 };
@@ -92,7 +100,7 @@ export const createPdfExport = (rows: ExportRow[]): Promise<Buffer> =>
         .fontSize(8)
         .fillColor("#475569")
         .text(
-          `${relatedName(row.event)} | ${relatedName(row.college)} | ${relatedName(row.department)} | ${row.rollNumber}`
+          `${relatedName(row.event)}${activityName(row.highlight) ? ` (${activityName(row.highlight)})` : ""} | ${relatedName(row.college)} | ${relatedName(row.department)} | ${row.rollNumber}`
         )
         .text(
           `${row.email} | ${row.phone} | Verification: ${row.verificationStatus} | Attendance: ${row.attendanceStatus}`
