@@ -18,6 +18,7 @@
     "start": "node dist/server.js",
     "bootstrap:admin": "tsx src/scripts/bootstrap-admin.ts",
     "seed:kec": "tsx src/scripts/seed-kec.ts",
+    "migrate:event-highlights": "tsx src/scripts/migrate-event-highlights.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src --max-warnings=0"
   },

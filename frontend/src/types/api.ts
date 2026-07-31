@@ -23,13 +23,25 @@ export interface Department {
   college: string;
 }
 
+export interface MediaAsset {
+  url: string;
+  publicId: string;
+}
+
+export interface EventHighlight {
+  _id?: string;
+  title: string;
+  description?: string;
+  image?: MediaAsset;
+}
+
 export interface Event {
   _id: string;
   name: string;
   code: string;
   description: string;
-  eventType?: string;
-  eventTypeDescription?: string;
+  banner?: MediaAsset;
+  highlights?: EventHighlight[];
   teamSize?: number;
   college: College | string | null;
   departments: Department[];

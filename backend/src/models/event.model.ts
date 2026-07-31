@@ -1,5 +1,5 @@
 import { model, models, Schema, type HydratedDocument, type Model, type Types } from "mongoose";
-import { codePattern, normalizedString } from "./shared.js";
+import { codePattern, mediaAssetSchema, normalizedString, type MediaAsset } from "./shared.js";
 
 export const eventStatuses = ["draft", "published", "ongoing", "completed", "cancelled"] as const;
 export type EventStatus = (typeof eventStatuses)[number];
@@ -11,12 +11,18 @@ export interface EventVenue {
   longitude?: number;
 }
 
+export interface EventHighlight {
+  title: string;
+  description?: string;
+  image?: MediaAsset;
+}
+
 export interface Event {
   name: string;
   code: string;
   description: string;
-  eventType: string;
-  eventTypeDescription?: string;
+  banner?: MediaAsset;
+  highlights: EventHighlight[];
   teamSize: number;
   college: Types.ObjectId;
   departments: Types.ObjectId[];
@@ -43,6 +49,12 @@ const venueSchema = new Schema<EventVenue>(
   { _id: false }
 );
 
+const eventHighlightSchema = new Schema<EventHighlight>({
+  title: normalizedString(200),
+  description: normalizedString(1000, { required: false }),
+  image: { type: mediaAssetSchema, required: false }
+});
+
 const eventSchema = new Schema<Event>(
   {
     name: normalizedString(200),
@@ -56,8 +68,8 @@ const eventSchema = new Schema<Event>(
       match: [codePattern, "Event code is invalid"]
     },
     description: normalizedString(5000),
-    eventType: normalizedString(200),
-    eventTypeDescription: normalizedString(1000),
+    banner: { type: mediaAssetSchema, required: false },
+    highlights: { type: [eventHighlightSchema], default: [] },
     teamSize: { type: Number, required: true, min: 1, max: 100 },
     college: { type: Schema.Types.ObjectId, ref: "College", required: true },
     departments: [{ type: Schema.Types.ObjectId, ref: "Department" }],

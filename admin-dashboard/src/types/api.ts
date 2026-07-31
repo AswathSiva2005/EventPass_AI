@@ -22,8 +22,10 @@ export interface Registration {
   selfie: { url: string }; idFront: { url: string }; idBack: { url: string };
   event: RefItem | null; college: RefItem | null; department: RefItem | null;
 }
+export interface MediaAsset { url: string; publicId: string; }
+export interface EventHighlight { _id?: string; title: string; description?: string; image?: MediaAsset; }
 export interface AdminEvent {
-  _id: string; name: string; code: string; description: string; eventType?: string; eventTypeDescription?: string; teamSize?: number; status: string; startsAt: string; endsAt: string; registrationOpensAt: string; registrationClosesAt: string;
+  _id: string; name: string; code: string; description: string; banner?: MediaAsset; highlights: EventHighlight[]; teamSize?: number; status: string; startsAt: string; endsAt: string; registrationOpensAt: string; registrationClosesAt: string;
   capacity: number; registrationCount: number; college: RefItem | null; departments: RefItem[];
   venue: { name: string; address: string };
 }

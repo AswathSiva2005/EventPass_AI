@@ -13,13 +13,15 @@ import {
   subAdminsController,
   reviewController,
   updateEventController,
-  reviewEventDeletionController
+  reviewEventDeletionController,
+  uploadEventImageController
 } from "../controllers/admin.controller.js";
 import {
   authenticate,
   authorize,
   authorizeUserModels
 } from "../middlewares/auth.middleware.js";
+import { imageUpload } from "../middlewares/upload.middleware.js";
 import { validateRequest } from "../middlewares/validation.middleware.js";
 import {
   createEventValidator,
@@ -52,6 +54,7 @@ adminRouter.patch(
   reviewController
 );
 adminRouter.get("/events", eventsController);
+adminRouter.post("/uploads/image", imageUpload.single("image"), uploadEventImageController);
 adminRouter.post("/events", createEventValidator, validateRequest, createEventController);
 adminRouter.patch("/events/:eventId", updateEventValidator, validateRequest, updateEventController);
 adminRouter.delete("/events/:eventId", deleteEventValidator, deleteEventBodyValidator, validateRequest, deleteEventController);

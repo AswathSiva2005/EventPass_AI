@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { AdminEvent, ApiResponse, DashboardData, RefItem, Registration, SubAdmin } from "../types/api";
+import type { AdminEvent, ApiResponse, DashboardData, MediaAsset, RefItem, Registration, SubAdmin } from "../types/api";
 
 export const getDashboard = async () => (await api.get<ApiResponse<DashboardData>>("/admin/dashboard")).data.data;
 export const getRegistrations = async (params: Record<string, string | number>) => (await api.get<ApiResponse<Registration[]>>("/admin/registrations", { params })).data;
@@ -8,6 +8,11 @@ export const getAdminEvents = async () => (await api.get<ApiResponse<AdminEvent[
 export const createEvent = async (payload: unknown) => api.post("/admin/events", payload);
 export const updateEvent = async (id: string, payload: unknown) => api.patch(`/admin/events/${id}`, payload);
 export const deleteEvent = async (id: string, password?: string) => api.delete(`/admin/events/${id}`, password ? { data: { password } } : undefined);
+export const uploadEventImage = async (file: File) => {
+  const form = new FormData();
+  form.append("image", file);
+  return (await api.post<ApiResponse<MediaAsset>>("/admin/uploads/image", form)).data.data;
+};
 export interface EventDeletionRequest { _id: string; event: { _id: string; name: string; code: string; registrationCount: number }; requestedBy: { _id: string; name: string; email: string }; createdAt: string; }
 export const getEventDeletionRequests = async () => (await api.get<ApiResponse<EventDeletionRequest[]>>("/admin/event-deletion-requests")).data.data;
 export const reviewEventDeletion = async (id: string, decision: "approve"|"reject") => api.patch(`/admin/event-deletion-requests/${id}`, { decision });

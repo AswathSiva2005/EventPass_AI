@@ -270,12 +270,18 @@ export const reviewRegistration = async (input: {
   return student;
 };
 
+export interface EventHighlightInput {
+  title: string;
+  description?: string;
+  image?: { url: string; publicId: string };
+}
+
 export interface CreateEventInput {
   name: string;
   code: string;
   description?: string;
-  eventType: string;
-  eventTypeDescription?: string;
+  banner?: { url: string; publicId: string };
+  highlights: EventHighlightInput[];
   teamSize: number;
   college: string;
   departments: string[];
@@ -312,7 +318,11 @@ export const createEvent = async (
   }
 
   try {
-    const event = await EventModel.create({ ...input, description: input.description ?? input.eventTypeDescription ?? input.eventType, createdBy: adminId });
+    const event = await EventModel.create({
+      ...input,
+      description: input.description ?? input.highlights[0]?.description ?? input.highlights[0]?.title ?? input.name,
+      createdBy: adminId
+    });
     await AuditLogModel.create({
       actor: adminId,
       actorType: "Admin",
@@ -336,7 +346,7 @@ export const createEvent = async (
 export const listAdminEvents = async () =>
   EventModel.find()
     .select(
-      "name code description eventType eventTypeDescription teamSize college departments venue startsAt endsAt registrationOpensAt registrationClosesAt capacity registrationCount status createdAt"
+      "name code description banner highlights teamSize college departments venue startsAt endsAt registrationOpensAt registrationClosesAt capacity registrationCount status createdAt"
     )
     .populate("college", "name code")
     .populate("departments", "name code")
@@ -360,7 +370,11 @@ export const updateEvent = async (
 
   const event = await EventModel.findById(eventId);
   if (!event) throw new AppError("Event was not found", 404, "EVENT_NOT_FOUND");
-  Object.assign(event, { ...input, description: input.description ?? input.eventTypeDescription ?? input.eventType, createdBy: event.createdBy });
+  Object.assign(event, {
+    ...input,
+    description: input.description ?? input.highlights[0]?.description ?? input.highlights[0]?.title ?? input.name,
+    createdBy: event.createdBy
+  });
   try {
     await event.save();
   } catch (error) {

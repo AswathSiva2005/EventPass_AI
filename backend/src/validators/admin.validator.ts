@@ -35,8 +35,15 @@ export const createEventValidator = [
     .matches(/^[A-Z0-9][A-Z0-9_-]{2,49}$/)
     .withMessage("Event code is invalid"),
   body("description").optional({ values: "falsy" }).trim().isLength({ max: 5000 }),
-  body("eventType").trim().isLength({ min: 2, max: 200 }).withMessage("Event type is required"),
-  body("eventTypeDescription").optional({ values: "falsy" }).trim().isLength({ max: 1000 }),
+  body("banner").optional({ values: "falsy" }),
+  body("banner.url").optional({ values: "falsy" }).isURL().withMessage("Banner image URL is invalid"),
+  body("banner.publicId").optional({ values: "falsy" }).isString().isLength({ max: 255 }),
+  body("highlights").isArray({ min: 1, max: 20 }).withMessage("Add at least one 'what's happening' item"),
+  body("highlights.*.title").trim().isLength({ min: 2, max: 200 }).withMessage("Highlight title is required"),
+  body("highlights.*.description").optional({ values: "falsy" }).trim().isLength({ max: 1000 }),
+  body("highlights.*.image").optional({ values: "falsy" }),
+  body("highlights.*.image.url").optional({ values: "falsy" }).isURL().withMessage("Highlight image URL is invalid"),
+  body("highlights.*.image.publicId").optional({ values: "falsy" }).isString().isLength({ max: 255 }),
   body("teamSize").isInt({ min: 1, max: 100 }).toInt(),
   body("college").isMongoId().withMessage("College is invalid"),
   body("departments")

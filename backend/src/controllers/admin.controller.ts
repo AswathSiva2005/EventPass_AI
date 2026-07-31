@@ -17,6 +17,7 @@ import {
   type CreateEventInput,
   type RegistrationFilters
 } from "../services/admin.service.js";
+import { uploadBuffer } from "../services/cloudinary.service.js";
 import { createExcelExport, createPdfExport } from "../services/export.service.js";
 import { AppError } from "../utils/app-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
@@ -125,6 +126,19 @@ export const createEventController = asyncHandler(async (request, response) => {
 export const eventsController = asyncHandler(async (_request, response) => {
   const events = await listAdminEvents();
   sendSuccess(response, { message: "Events retrieved", data: events });
+});
+
+export const uploadEventImageController = asyncHandler(async (request, response) => {
+  if (!request.file) throw new AppError("An image file is required", 422, "FILE_REQUIRED");
+  const uploaded = await uploadBuffer(request.file.buffer, {
+    folder: "eventpass-ai/events",
+    resource_type: "image"
+  });
+  sendSuccess(response, {
+    statusCode: 201,
+    message: "Image uploaded",
+    data: { url: uploaded.secure_url, publicId: uploaded.public_id }
+  });
 });
 
 export const updateEventController = asyncHandler(async (request, response) => {
